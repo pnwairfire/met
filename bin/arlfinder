@@ -1,0 +1,95 @@
+#! /usr/bin/env python
+
+__author__ = "Joel Dubowy"
+__copyright__ = "Copyright 2016, AirFire, PNW, USFS"
+
+import json
+import logging
+import sys
+import traceback
+
+from pyairfire import scripting
+
+try:
+    from met.arl import arlfinder
+except:
+    import os
+    import sys
+    root_dir = os.path.abspath(os.path.join(sys.path[0], '../'))
+    sys.path.insert(0, root_dir)
+    from pyairfire import scripting
+    from met.arl import arlfinder
+
+REQUIRED_ARGS = [
+    {
+        'short': '-r',
+        'long': '--root-dir',
+        'help': "domain root directory (e.g. '/DRI_2km/')"
+    },
+    {
+        'short': '-s',
+        'long': '--start',
+        'help': "Ignore all data before this time",
+        'action': scripting.args.ParseDatetimeAction
+    },
+    {
+        'short': '-e',
+        'long': '--end',
+        'help': "Ignore all data after this time",
+        'action': scripting.args.ParseDatetimeAction
+    }
+]
+
+OPTIONAL_ARGS = [
+    {
+        'short': '-p',
+        'long': '--index-filename-pattern',
+        'help': "index filename pattern; default 'arl12hrindex.csv'"
+    },
+    {
+        'short': '-i',
+        'long': '--ignore-pattern',
+        'help': "pattern of dirs/files to ignore; e.g. '/MOVED/'"
+    },
+    {
+        'short': '-m',
+        'long': '--max-days-out',
+        'help': "max number of days out predicted in met data",
+        'type': int
+    },
+    {
+        'short': '-f',
+        'long': '--fewer-arl-files',
+        'help': "sacrifice recency of data for fewer numer of files",
+        'action': 'store_true',
+        'default': False
+    }
+]
+
+EXAMPLES_STR = """This script returns arl ata
+
+Examples:
+  $ arlfinder -r /DRI_6km/ -s 2016-04-01T00:00:00 -e 2016-04-02T12:00:00
+  $ arlfinder -r /bluesky/data/NAM84/ -s 2015-09-19T00:00:00 -e 2015-09-20T12:00:00 \
+        -p NAM84_ARL_index.csv -f --log-level=DEBUG | python -m json.tool
+ """
+
+if __name__ == "__main__":
+    parser, args = scripting.args.parse_args(REQUIRED_ARGS, OPTIONAL_ARGS,
+        epilog=EXAMPLES_STR)
+
+    try:
+        start = args.__dict__.pop('start')
+        end = args.__dict__.pop('end')
+        indexer = arlfinder.ArlFinder(
+            # Pop reqired args so that they're not passed in as 'config'
+            # TODO: not really necessary, so maybe just use
+            #   `args.domain` and `args.root_dir`
+            args.__dict__.pop('root_dir'),
+            **args.__dict__)
+        sys.stdout.write(json.dumps(indexer.find(start, end)))
+
+    except Exception, e:
+        logging.error(e)
+        logging.debug(traceback.format_exc())
+        scripting.utils.exit_with_msg(e)

@@ -30,7 +30,7 @@ setup(
     url='https://github.com/pnwairfire/met',
     description='Meteorological python utilities for the PNW AirFire team.',
     install_requires=[
-        "pyairfire==1.1.0",
+        "pyairfire>=1.1.0",
         "pymongo==3.2.2"
     ],
     tests_require=test_requirements

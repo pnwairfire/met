@@ -389,7 +389,7 @@ class ARLProfile(object):
         pressure levels that are below the surface of the Earth.
         This data is all nonsense, so it needs to be removed.
         """
-        for dt, param_dict in self.hourly_profile.items():
+        for dt, param_dict in list(self.hourly_profile.items()):
             surface_p = float(param_dict['pressure_at_surface'][0])
             if surface_p > float(param_dict['pressure'][0]) or surface_p < float(param_dict['pressure'][-1]):
                 continue

@@ -309,7 +309,7 @@ class MetDatesCollection(ArlIndexDB):
         # iterate through domains, removing from partial_dates any dates
         # that are in complete_dates, and create record for domain
         to_save = []
-        for domain, data in dates_by_domain.items():
+        for domain, data in list(dates_by_domain.items()):
             partial_dates = list(
                 set(data['partial_dates']) - set(data['complete_dates']))
             to_save.append({

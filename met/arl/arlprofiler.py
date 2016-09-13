@@ -15,6 +15,7 @@ __copyright__ = "Copyright 2016, AirFire, PNW, USFS"
 
 import logging
 import os
+import re
 import subprocess
 from datetime import date, datetime, timedelta
 from math import exp, log, pow
@@ -327,13 +328,14 @@ class ARLProfile(object):
 
     CHARACTERS_PER_VALUE = 6
 
+    NEGATIVE_NUMBER_MATCHER = re.compile('([^E])-')
     def _split_hour_pressure_vals(self, line):
         # Some values occupy 6 characters, and some 8.  They are for
         # the most part separated by spaces. The one exception I've
         # found is when a negative number's '-' is right up against
         # the value to it's left; so, add an extra space before any
         # '-' and then split on space
-        return line.replace('-', ' -').split()
+        return self.NEGATIVE_NUMBER_MATCHER.subn('\\1 -', line)[0].split()
 
     def parse_hourly_text(self, profile):
         """ Parse raw hourly text into a more useful dictionary """

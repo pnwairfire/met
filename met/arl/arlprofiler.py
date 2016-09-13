@@ -325,8 +325,19 @@ class ARLProfile(object):
         self.utc_to_local()
         return self.hourly_profile
 
+    CHARACTERS_PER_VALUE = 6
+
+    def _split_hour_pressure_vals(self, line):
+        # Some values occupy 6 characters, and some 8.  They are for
+        # the most part separated by spaces. The one exception I've
+        # found is when a negative number's '-' is right up against
+        # the value to it's left; so, add an extra space before any
+        # '-' and then split on space
+        return line.replace('-', ' -').split()
+
     def parse_hourly_text(self, profile):
         """ Parse raw hourly text into a more useful dictionary """
+
         for hour in profile:
             # 'date' is of the form: ['12', '6', '22', '18', '0']
             date = hour[1][hour[1].find(":") + 1:].strip().split()
@@ -341,7 +352,7 @@ class ARLProfile(object):
             first_vars.append('pressure_at_surface')
             for var_str in hour[line_numbers[0]].split():
                 first_vars.append(var_str)
-            first_vals = hour[line_numbers[1]].split()
+            first_vals = self._split_hour_pressure_vals(hour[line_numbers[1]])
             for v in range(len(first_vars)):
                 vars[first_vars[v]] = []
                 vars[first_vars[v]].append(first_vals[v])
@@ -354,7 +365,7 @@ class ARLProfile(object):
             for v in main_vars:
                 vars[v] = []
             for i in range(line_numbers[3], len(hour)):
-                line = hour[i].split()
+                line = self._split_hour_pressure_vals(hour[i])
                 if len(line) > 0:
                     for j in range(len(line)):
                         vars[main_vars[j]].append(line[j])
@@ -437,6 +448,7 @@ class ARLProfile(object):
         # TODO: distinguish between floats and ints; use '<string>.isdigit()'
         # (which returns true if integer); can assume that, if string and not int,
         # then it's a float (?)
+
         for dt, hp in list(self.hourly_profile.items()):
             for k in hp:
                 if hasattr(hp[k], 'append'):

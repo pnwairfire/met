@@ -326,8 +326,6 @@ class ARLProfile(object):
         self.utc_to_local()
         return self.hourly_profile
 
-    CHARACTERS_PER_VALUE = 6
-
     NEGATIVE_NUMBER_MATCHER = re.compile('([^E])-')
     def _split_hour_pressure_vals(self, line):
         # Some values occupy 6 characters, and some 8.  They are for

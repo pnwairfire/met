@@ -85,8 +85,8 @@ import os
 import re
 from collections import defaultdict
 
+from afdatetime.parsing import parse_datetimes, parse_utc_offset
 from pyairfire.data import utils as datautils
-from pyairfire.datetime.parsing import parse_datetimes, parse_utc_offset
 from pyairfire.io import CSV2JSON
 
 __all__ = [

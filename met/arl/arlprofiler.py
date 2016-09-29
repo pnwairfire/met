@@ -21,7 +21,7 @@ from datetime import date, datetime, timedelta
 from math import exp, log, pow
 
 from pyairfire import osutils, sun
-from pyairfire.datetime.parsing import parse_datetimes
+from afdatetime.parsing import parse_datetimes
 
 __all__ = [
     'ArlProfiler'

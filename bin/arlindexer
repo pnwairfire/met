@@ -6,7 +6,8 @@ __copyright__ = "Copyright 2016, AirFire, PNW, USFS"
 import logging
 import traceback
 
-from pyairfire import scripting
+from afscripting import args as scripting_args
+from afscripting.utils import exit_with_msg
 
 try:
 
@@ -16,7 +17,6 @@ except:
     import sys
     root_dir = os.path.abspath(os.path.join(sys.path[0], '../'))
     sys.path.insert(0, root_dir)
-    from pyairfire import scripting
     from met.arl import arlindexer
 
 REQUIRED_ARGS = [
@@ -57,13 +57,13 @@ OPTIONAL_ARGS = [
         'short': '-s',
         'long': '--start',
         'help': "Ignore all data before this time",
-        'action': scripting.args.ParseDatetimeAction
+        'action': scripting_args.ParseDatetimeAction
     },
     {
         'short': '-e',
         'long': '--end',
         'help': "Ignore all data after this time",
-        'action': scripting.args.ParseDatetimeAction
+        'action': scripting_args.ParseDatetimeAction
     },
     {
         'long': '--server-name',
@@ -81,7 +81,7 @@ Examples:
  """
 
 if __name__ == "__main__":
-    parser, args = scripting.args.parse_args(REQUIRED_ARGS, OPTIONAL_ARGS,
+    parser, args = scripting_args.parse_args(REQUIRED_ARGS, OPTIONAL_ARGS,
         epilog=EXAMPLES_STR)
 
     try:
@@ -99,4 +99,4 @@ if __name__ == "__main__":
     except Exception as e:
         logging.error(e)
         logging.debug(traceback.format_exc())
-        scripting.utils.exit_with_msg(e)
+        exit_with_msg(e)

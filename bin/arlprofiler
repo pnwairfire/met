@@ -8,7 +8,8 @@ import logging
 import sys
 import traceback
 
-from pyairfire import scripting
+from afscripting import args as scripting_args
+from afscripting.utils import exit_with_msg
 
 try:
     from met.arl import arlprofiler
@@ -16,10 +17,9 @@ except:
     import os
     root_dir = os.path.abspath(os.path.join(sys.path[0], '../'))
     sys.path.insert(0, root_dir)
-    from pyairfire import scripting
     from met.arl import arlprofiler
 
-class ParseArlFilesAction(scripting.args.Action):
+class ParseArlFilesAction(scripting_args.Action):
 
     def __call__(self, parser, namespace, value, option_string=None):
         """Splits value into key/value, and set in destination dict
@@ -33,7 +33,7 @@ class ParseArlFilesAction(scripting.args.Action):
             msg = ("Invalid value '{}' for option '{}' - value must be of the "
                 "form '<file>;<first_hour>;<last_hour>', where 'first_hour'"
                 " and 'last_hour' are UTC".format(value, option_string))
-            raise scripting.args.ArgumentTypeError(msg)
+            raise scripting_args.ArgumentTypeError(msg)
         d = getattr(namespace, self.dest)
         d = d or []
         d.append({"file": m[0], "first_hour": m[1], "last_hour": m[2]})
@@ -69,13 +69,13 @@ REQUIRED_ARGS = [
         'short': '-s',
         'long': '--start',
         'help': "start of time window to profile (local time)",
-        'action': scripting.args.ParseDatetimeAction
+        'action': scripting_args.ParseDatetimeAction
     },
     {
         'short': '-e',
         'long': '--end',
         'help': "end of time window to profile (local time)",
-        'action': scripting.args.ParseDatetimeAction
+        'action': scripting_args.ParseDatetimeAction
     },
     {
         'short': '-o',
@@ -124,7 +124,7 @@ Examples:
  """
 
 if __name__ == "__main__":
-    parser, args = scripting.args.parse_args(REQUIRED_ARGS, OPTIONAL_ARGS,
+    parser, args = scripting_args.parse_args(REQUIRED_ARGS, OPTIONAL_ARGS,
         epilog=EXAMPLES_STR)
     try:
         profiler = arlprofiler.ArlProfiler(args.met_files,
@@ -135,4 +135,4 @@ if __name__ == "__main__":
     except Exception as e:
         logging.error(e)
         logging.debug(traceback.format_exc())
-        scripting.utils.exit_with_msg(e)
+        exit_with_msg(e)

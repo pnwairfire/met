@@ -4,6 +4,7 @@ __author__ = "Joel Dubowy"
 __copyright__ = "Copyright 2016, AirFire, PNW, USFS"
 
 import logging
+import sys
 import traceback
 
 from afscripting import args as scripting_args
@@ -75,10 +76,10 @@ EXAMPLES_STR = """This script updates the arl index with the availability of
 a particular domain on the current server.
 
 Examples:
-  $ arlindexer -d DRI6km -r /DRI_6km/
-  $ arlindexer -d DRI6km -r /DRI_6km/ \\
+  $ {script_name} -d DRI6km -r /DRI_6km/
+  $ {script_name} -d DRI6km -r /DRI_6km/ \\
       -m mongodb://localhost:27017/arlindex
- """
+ """.format(script_name=sys.argv[0])
 
 if __name__ == "__main__":
     parser, args = scripting_args.parse_args(REQUIRED_ARGS, OPTIONAL_ARGS,

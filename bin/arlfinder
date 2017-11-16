@@ -69,10 +69,10 @@ OPTIONAL_ARGS = [
 EXAMPLES_STR = """This script returns arl ata
 
 Examples:
-  $ arlfinder -r /DRI_6km/ -s 2016-04-01T00:00:00 -e 2016-04-02T12:00:00
-  $ arlfinder -r /bluesky/data/NAM84/ -s 2015-09-19T00:00:00 -e 2015-09-20T12:00:00 \
+  $ {script_name} -r /DRI_6km/ -s 2016-04-01T00:00:00 -e 2016-04-02T12:00:00
+  $ {script_name} -r /bluesky/data/NAM84/ -s 2015-09-19T00:00:00 -e 2015-09-20T12:00:00 \
         -p NAM84_ARL_index.csv -f --log-level=DEBUG | python -m json.tool
- """
+ """.format(script_name=sys.argv[0])
 
 if __name__ == "__main__":
     parser, args = scripting_args.parse_args(REQUIRED_ARGS, OPTIONAL_ARGS,

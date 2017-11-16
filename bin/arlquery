@@ -41,9 +41,9 @@ EXAMPLES_STR = """This script queries the arl index for the availability
 of arl files and the dates represented by them.
 
 Examples:
-  $ arlquery -m mongodb://localhost:27017/arlindex
-  $ arlqyert -m mongodb://localhost:27017/arlindex -q domain=DRI2km
- """
+  $ {script_name} -m mongodb://localhost:27017/arlindex
+  $ {script_name} -m mongodb://localhost:27017/arlindex -q domain=DRI2km
+ """.format(script_name=sys.argv[0])
 
 if __name__ == "__main__":
     parser, args = scripting_args.parse_args(REQUIRED_ARGS, OPTIONAL_ARGS,

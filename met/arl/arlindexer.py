@@ -139,7 +139,8 @@ class ArlIndexer(ArlFinder):
         # Note: reduce will be removed from py 3.0 standard library; though it
         # will be available in functools, use explicit loop instead
         dates = defaultdict(lambda: [])
-        for dt in sorted(files_per_hour.keys()):
+        sorted_hours = sorted(files_per_hour.keys())
+        for dt in sorted_hours:
             dates[dt.date()].append(dt.hour)
         complete_dates = [d for d in dates if len(dates[d]) == 24]
         partial_dates = list(set(dates) - set(complete_dates))
@@ -147,6 +148,8 @@ class ArlIndexer(ArlFinder):
         data = {
             'server': server_name,
             'domain': self._domain,
+            'start': sorted_hours[0],
+            'end': sorted_hours[-1],
             'complete_dates': sorted(complete_dates),
             'partial_dates': sorted(partial_dates),
             'root_dir': self._met_root_dir,

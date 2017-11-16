@@ -29,7 +29,7 @@ or http:
 After installing the non-python dependencies (mentioned above), run the
 following to install required python packages:
 
-    pip install --trusted-host pypi.smoke.airfire.org -i http://pypi.smoke.airfire.org/simple -r requirements.txt
+    pip install --trusted-host pypi.smoke.airfire.org --extra-index http://pypi.smoke.airfire.org/simple -r requirements.txt
     pip install -r requirements-dev.txt
     pip install -r requirements-test.txt
 

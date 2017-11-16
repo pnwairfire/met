@@ -32,7 +32,7 @@ setup(
     install_requires=[
         "pyairfire==3.*",
         "afscripting==1.*",
-        "afdatetime==1.*",
+        "afdatetime>=1.0.2,<2.0",
         "pymongo>=3.4,<4"
     ],
     dependency_links=[

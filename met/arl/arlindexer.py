@@ -192,7 +192,7 @@ class ArlIndexer(ArlFinder):
         MetFilesCollection(mongodb_url).update(index_data)
         # TODO: instead of manually invoking update of dates collection
         #   here, use a trigger or have MetFilesCollection.update invoke it
-        MetDatesCollection(mongodb_url).compute_and_save()
+        MetDatesCollection(mongodb_url).compute_and_save(domain=self._domain)
         # TODO: other hierarchies to be stored in mongodb (possibly
         #   maintained via triggers?):
         #   - met > server > date

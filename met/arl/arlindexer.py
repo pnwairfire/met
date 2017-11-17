@@ -149,8 +149,8 @@ class ArlIndexer(ArlFinder):
         data = {
             'server': server_name,
             'domain': self._domain,
-            'start': sorted_hours[0],
-            'end': sorted_hours[-1],
+            'start': sorted_hours[0] if sorted_hours else None,
+            'end': sorted_hours[-1] if sorted_hours else None,
             'complete_dates': sorted(complete_dates),
             'partial_dates': sorted(partial_dates),
             'root_dir': self._met_root_dir,

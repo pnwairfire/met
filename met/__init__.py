@@ -1,4 +1,4 @@
 __author__      = "Joel Dubowy"
 
-__version_info__ = (1,1,6)
+__version_info__ = (1,1,7)
 __version__ = '.'.join([str(n) for n in __version_info__])

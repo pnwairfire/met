@@ -317,11 +317,15 @@ class MetDatesCollection(ArlIndexDB):
                 }
 
             else:
-                d = date_info_by_domain[d['domain']]
+                date_info = date_info_by_domain[d['domain']]
                 for k in ('complete_dates', 'partial_dates'):
-                    d[k].extend(d[k])
-                d['start'] = min(d['start'], d['start'])
-                d['end'] = max(d['end'], d['end'])
+                    date_into[k].extend(d[k])
+                for k, f in (('start', min), ('end', max)):
+                    if date_info[k] and d[k]:
+                        date_info[k] = f(date_info[k], d[k])
+                    elif d[k]:
+                        date_info[k] = d[k]
+                    # else leave date_info[k] as is
 
         # iterate through domains, removing from partial_dates any dates
         # that are in complete_dates, and create record for domain

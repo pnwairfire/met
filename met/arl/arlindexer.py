@@ -304,29 +304,44 @@ class MetDatesCollection(ArlIndexDB):
     INDEXED_FIELDS = ['domain']
 
     # TODO: build aggregation into the db as a trigger
-    def compute(self):
-        dates_by_domain = defaultdict(lambda: defaultdict(lambda: []))
-        for d in self.met_files.find():
-            dates_by_domain[d['domain']]['complete_dates'].extend(
-                d['complete_dates'])
-            dates_by_domain[d['domain']]['partial_dates'].extend(
-                d['partial_dates'])
+    def compute(self, domain=None):
+        date_info_by_domain = {}
+        query = {'domain': domain} if domain else {}
+        for d in self.met_files.find(query):
+            if d['domain'] not in date_info_by_domain:
+                date_info_by_domain[d['domain']] = {
+                    'complete_dates': d['complete_dates'],
+                    'partial_dates': d['partial_dates'],
+                    'start': d['start'],
+                    'end': d['start']
+                }
+
+            else:
+                d = date_info_by_domain[d['domain']]
+                for k in ('complete_dates', 'partial_dates'):
+                    d[k].extend(d[k])
+                d['start'] = min(d['start'], d['start'])
+                d['end'] = max(d['start'], d['start'])
 
         # iterate through domains, removing from partial_dates any dates
         # that are in complete_dates, and create record for domain
         to_save = []
-        for domain, data in list(dates_by_domain.items()):
+        for domain, data in list(date_info_by_domain.items()):
             partial_dates = list(
                 set(data['partial_dates']) - set(data['complete_dates']))
             to_save.append({
                 'domain': domain,
                 'complete_dates': data['complete_dates'],
-                'partial_dates': partial_dates
+                'partial_dates': partial_dates,
+                'start': data['start'],
+                'end': data['end']
             })
         return to_save
 
-    def compute_and_save(self):
-        to_save = self.compute()
+    def compute_and_save(self, domain=None):
+        """Updates the dates information across all servers
+        """
+        to_save = self.compute(domain=None)
 
         # TODO: is there a way to do a bulk write, opting for upsert
         #  on each item in to_save?

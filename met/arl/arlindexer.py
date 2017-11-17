@@ -313,7 +313,7 @@ class MetDatesCollection(ArlIndexDB):
                     'complete_dates': d['complete_dates'],
                     'partial_dates': d['partial_dates'],
                     'start': d['start'],
-                    'end': d['start']
+                    'end': d['end']
                 }
 
             else:
@@ -321,7 +321,7 @@ class MetDatesCollection(ArlIndexDB):
                 for k in ('complete_dates', 'partial_dates'):
                     d[k].extend(d[k])
                 d['start'] = min(d['start'], d['start'])
-                d['end'] = max(d['start'], d['start'])
+                d['end'] = max(d['end'], d['end'])
 
         # iterate through domains, removing from partial_dates any dates
         # that are in complete_dates, and create record for domain

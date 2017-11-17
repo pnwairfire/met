@@ -230,9 +230,9 @@ class ArlIndexDB(object):
         # across  all servers
         self.dates = self.client[db_name]['dates']
 
-        # TODO: call _ensure_indices here?
-        # self._ensure_indices(self.met_files)
-        # self._ensure_indices(self.dates)
+        # TODO: is this the appropriate place to call _ensure_indices
+        self._ensure_indices(self.met_files)
+        self._ensure_indices(self.dates)
 
     DEFAULT_DB_NAME = 'arlindex'
     DEFAULT_DB_URL = 'mongodb://localhost/{}'.format(DEFAULT_DB_NAME)
@@ -283,10 +283,11 @@ class MetFilesCollection(ArlIndexDB):
     INDEXED_FIELDS = ['server', 'domain']
 
     def update(self, index_data):
+        """Updates the set of arl files on record **for a particular
+        domain on a specific server**.
+        """
         if not index_data.get('server') or not index_data.get('domain'):
             raise ValueError("Index data must define 'server' and 'domain'")
-
-        self._ensure_indices(self.met_files)  # TODO: call this in the init?
 
         # we want to update or insert
         query = {'server': index_data['server'], 'domain': index_data['domain']}
@@ -326,9 +327,6 @@ class MetDatesCollection(ArlIndexDB):
 
     def compute_and_save(self):
         to_save = self.compute()
-
-        self._ensure_indices(self.met_files)  # TODO: call this in the init?
-        self._ensure_indices(self.dates)  # TODO: call this in the init?
 
         # TODO: is there a way to do a bulk write, opting for upsert
         #  on each item in to_save?

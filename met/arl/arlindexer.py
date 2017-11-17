@@ -13,6 +13,7 @@ import os
 import re
 import socket
 import sys
+import traceback
 from collections import defaultdict
 
 import pymongo
@@ -181,6 +182,7 @@ class ArlIndexer(ArlFinder):
                         m(self._config[k], index_data)
                         succeeded = True
                     except Exception as e:
+                        logging.debug(traceback.format_exc())
                         logging.error("Failed to write to {}: {}".format(
                             ' '.join(k.split('_')), e))
             if not succeeded:

@@ -319,7 +319,7 @@ class MetDatesCollection(ArlIndexDB):
             else:
                 date_info = date_info_by_domain[d['domain']]
                 for k in ('complete_dates', 'partial_dates'):
-                    date_into[k].extend(d[k])
+                    date_info[k].extend(d[k])
                 for k, f in (('start', min), ('end', max)):
                     if date_info[k] and d[k]:
                         date_info[k] = f(date_info[k], d[k])

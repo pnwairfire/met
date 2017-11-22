@@ -15,7 +15,8 @@ from met.arl import arlindexer
 class TestARLIndexer(object):
 
     def setup(self):
-        self.arl_indexer = arlindexer.ArlIndexer('DRI6km', tempfile.mkdtemp())
+        self.arl_indexer = arlindexer.ArlIndexer('DRI6km', tempfile.mkdtemp(),
+            server_name="Foo Test Server")
 
     def test_filter(self):
         files_per_hour = {
@@ -178,6 +179,10 @@ class TestARLIndexer(object):
             assert s, e == self.arl_indexer._fill_in_start_end(s, None)
 
     def test_analyse(self):
+        index_files = [
+            "/foo/2015010112/arlindex.csv",
+            "/foo/2015010200/arlindex.csv"
+        ]
         files_per_hour = {
             datetime.datetime(2015,1,1,23,0,0): 'a',
             datetime.datetime(2015,1,2,0,0,0): 'b',
@@ -230,11 +235,19 @@ class TestARLIndexer(object):
         ]
 
         expected = {
+            'server': "Foo Test Server",
+            'domain': 'DRI6km',
+            'latest_forecast': datetime.datetime(2015,1,2,0),
+            'start': datetime.datetime(2015,1,1,23,0,0),
+            'end': datetime.datetime(2015,1,2,23,0,0),
             'complete_dates': [datetime.date(2015,1,2)],
             'partial_dates': [datetime.date(2015,1,1)],
             'root_dir': self.arl_indexer._met_root_dir,
             'files': files
         }
+
+        assert expected == self.arl_indexer._analyse(index_files,
+            files_per_hour, files)
 
     # TODO: test _write
     # TODO: test _write_to_mongodb_url

@@ -344,7 +344,8 @@ class MetDatesCollection(ArlIndexDB):
                 'complete_dates': complete_dates,
                 'partial_dates': partial_dates,
                 'start': date_info['start'],
-                'end': date_info['end']
+                'end': date_info['end'],
+                'latest_forecast': date_info['latest_forecast']
             })
         return to_save
 

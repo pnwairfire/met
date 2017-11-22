@@ -136,6 +136,14 @@ class ArlIndexer(ArlFinder):
     ## Reorganizing data for index
     ##
 
+    def _parse_latest_forecast(self, index_files):
+        if index_files:
+            # index_files should aleady be sorted, but sort again just to be safe
+            m = self.ALL_DATE_MATCHER.match(sorted(index_files)[-1])
+            if m:
+                return datetime.datetime.strptime(m.group(1), '%Y%m%d%H')
+        # else return None
+
     def _analyse(self, index_files, files_per_hour, files):
         # Note: reduce will be removed from py 3.0 standard library; though it
         # will be available in functools, use explicit loop instead
@@ -146,13 +154,10 @@ class ArlIndexer(ArlFinder):
         complete_dates = [d for d in dates if len(dates[d]) == 24]
         partial_dates = list(set(dates) - set(complete_dates))
         server_name = self._config.get('server_name') or socket.gethostname()
-        # index_files should aleady be sorted, but sort again just to be safe
-        m = self.ALL_DATE_MATCHER.match(sorted(index_files)[-1])
-        latest_forecast = datetime.datetime.strptime(m.group(1), '%Y%m%d%H')
         data = {
             'server': server_name,
             'domain': self._domain,
-            'latest_forecast': latest_forecast,
+            'latest_forecast': self._parse_latest_forecast(index_files),
             'start': sorted_hours[0] if sorted_hours else None,
             'end': sorted_hours[-1] if sorted_hours else None,
             'complete_dates': sorted(complete_dates),

@@ -69,9 +69,9 @@ class ArlIndexer(ArlFinder):
         files_per_hour = self._determine_files_per_hour(arl_files, start, end)
         files = self._determine_file_time_windows(files_per_hour)
         files_per_hour, files = self._filter(files_per_hour, files, start, end)
-        index_data = self._analyse(files_per_hour, files)
+        index_data = self._analyse(index_files, files_per_hour, files)
         # TODO: if there's a way to get domain boundaries, do it here.
-        #   (it can change, so would need ot get boundaries for each set
+        #   (it can change, so would need to get boundaries for each set
         #   of met files....probably too much pain to be worth it)
         self._write(index_data)
 
@@ -136,7 +136,7 @@ class ArlIndexer(ArlFinder):
     ## Reorganizing data for index
     ##
 
-    def _analyse(self, files_per_hour, files):
+    def _analyse(self, index_files, files_per_hour, files):
         # Note: reduce will be removed from py 3.0 standard library; though it
         # will be available in functools, use explicit loop instead
         dates = defaultdict(lambda: [])
@@ -146,9 +146,13 @@ class ArlIndexer(ArlFinder):
         complete_dates = [d for d in dates if len(dates[d]) == 24]
         partial_dates = list(set(dates) - set(complete_dates))
         server_name = self._config.get('server_name') or socket.gethostname()
+        # index_files should aleady be sorted, but sort again just to be safe
+        m = self.ALL_DATE_MATCHER.match(sorted(index_files)[-1])
+        latest_forecast = datetime.datetime.strptime(m.group(1), '%Y%m%d%H')
         data = {
             'server': server_name,
             'domain': self._domain,
+            'latest_forecast': latest_forecast,
             'start': sorted_hours[0] if sorted_hours else None,
             'end': sorted_hours[-1] if sorted_hours else None,
             'complete_dates': sorted(complete_dates),
@@ -310,6 +314,7 @@ class MetDatesCollection(ArlIndexDB):
         for d in self.met_files.find(query):
             if d['domain'] not in date_info_by_domain:
                 date_info_by_domain[d['domain']] = {
+                    'latest_forecast': d['latest_forecast'],
                     'complete_dates': d['complete_dates'],
                     'partial_dates': d['partial_dates'],
                     'start': d['start'],
@@ -320,7 +325,7 @@ class MetDatesCollection(ArlIndexDB):
                 date_info = date_info_by_domain[d['domain']]
                 for k in ('complete_dates', 'partial_dates'):
                     date_info[k].extend(d[k])
-                for k, f in (('start', min), ('end', max)):
+                for k, f in (('start', min), ('end', max), ('latest_forecast', max)):
                     if date_info[k] and d[k]:
                         date_info[k] = f(date_info[k], d[k])
                     elif d[k]:

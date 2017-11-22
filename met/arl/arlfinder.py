@@ -223,7 +223,7 @@ class ArlFinder(object):
     ##
 
     # TODO: add '$' after date?
-    ALL_DATE_MATCHER = re.compile('.*\d{10}')
+    ALL_DATE_MATCHER = re.compile('.*(\d{10})')
 
     def _create_date_matcher(self, start, end):
         """Returns a compiled regex object that matches %Y%m%d date strings

@@ -315,8 +315,8 @@ class MetDatesCollection(ArlIndexDB):
             if d['domain'] not in date_info_by_domain:
                 date_info_by_domain[d['domain']] = {
                     'latest_forecast': d['latest_forecast'],
-                    'complete_dates': d['complete_dates'],
-                    'partial_dates': d['partial_dates'],
+                    'complete_dates': set(d['complete_dates']),
+                    'partial_dates': set(d['partial_dates']),
                     'start': d['start'],
                     'end': d['end']
                 }
@@ -324,7 +324,7 @@ class MetDatesCollection(ArlIndexDB):
             else:
                 date_info = date_info_by_domain[d['domain']]
                 for k in ('complete_dates', 'partial_dates'):
-                    date_info[k].extend(d[k])
+                    date_info[k].update(d[k])
                 for k, f in (('start', min), ('end', max), ('latest_forecast', max)):
                     if date_info[k] and d[k]:
                         date_info[k] = f(date_info[k], d[k])
@@ -335,15 +335,16 @@ class MetDatesCollection(ArlIndexDB):
         # iterate through domains, removing from partial_dates any dates
         # that are in complete_dates, and create record for domain
         to_save = []
-        for domain, data in date_info_by_domain.items():
-            partial_dates = list(
-                set(data['partial_dates']) - set(data['complete_dates']))
+        for domain, date_info in date_info_by_domain.items():
+            partial_dates = sorted(list(date_info['partial_dates']
+                - date_info['complete_dates']))
+            complete_dates = sorted(list(date_info['complete_dates']))
             to_save.append({
                 'domain': domain,
-                'complete_dates': data['complete_dates'],
+                'complete_dates': complete_dates,
                 'partial_dates': partial_dates,
-                'start': data['start'],
-                'end': data['end']
+                'start': date_info['start'],
+                'end': date_info['end']
             })
         return to_save
 

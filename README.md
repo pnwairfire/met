@@ -56,10 +56,10 @@ First, install pip (with sudo if necessary):
 
     apt-get install python-pip
 
-Then, to install, for example, v1.1.7, use the following (with sudo if
+Then, to install, for example, v1.1.8, use the following (with sudo if
 necessary):
 
-    pip install --trusted-host pypi.smoke.airfire.org -i http://pypi.smoke.airfire.org/simple met==1.1.7
+    pip install --trusted-host pypi.smoke.airfire.org -i http://pypi.smoke.airfire.org/simple met==1.1.8
 
 If you get an error like    ```AttributeError: 'NoneType' object has no attribute 'skip_requirements_regex```, it means you need in upgrade pip.  One way to do so is with the following:
 

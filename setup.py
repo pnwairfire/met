@@ -36,8 +36,8 @@ setup(
         "pymongo>=3.4,<4"
     ],
     dependency_links=[
-        "https://pypi.smoke.airfire.org/simple/pyairfire/",
-        "https://pypi.smoke.airfire.org/simple/afscripting/"
+        "https://pypi.airfire.org/simple/pyairfire/",
+        "https://pypi.airfire.org/simple/afscripting/"
     ],
     tests_require=test_requirements
 )

@@ -29,7 +29,7 @@ or http:
 After installing the non-python dependencies (mentioned above), run the
 following to install required python packages:
 
-    pip install --trusted-host pypi.smoke.airfire.org --extra-index http://pypi.smoke.airfire.org/simple -r requirements.txt
+    pip install --extra-index https://pypi.airfire.org/simple -r requirements.txt
     pip install -r requirements-dev.txt
     pip install -r requirements-test.txt
 
@@ -59,7 +59,7 @@ First, install pip (with sudo if necessary):
 Then, to install, for example, v1.1.9, use the following (with sudo if
 necessary):
 
-    pip install --trusted-host pypi.smoke.airfire.org -i http://pypi.smoke.airfire.org/simple met==1.1.9
+    pip install --extra-index https://pypi.airfire.org/simple met==1.1.9
 
 If you get an error like    ```AttributeError: 'NoneType' object has no attribute 'skip_requirements_regex```, it means you need in upgrade pip.  One way to do so is with the following:
 

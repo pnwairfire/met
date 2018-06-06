@@ -229,10 +229,10 @@ class ArlIndexDB(object):
             format 'mongodb://[username:password@]host[:port][/[database][?options]]'"
 
         config options:
-         - ssl_certfile -- if specified, ssl_keyfile must be specified too
-         - ssl_keyfile -- if specified, ssl_certfile must be specified too
-         - ssl_ca_certs -- can be specified instead of ssl_certfile and
-            ssl_keyfile
+         - mongo_ssl_certfile -- if specified, mongo_ssl_keyfile must be specified too
+         - mongo_ssl_keyfile -- if specified, mongo_ssl_certfile must be specified too
+         - mongo_ssl_ca_certs -- can be specified instead of mongo_ssl_certfile and
+            mongo_ssl_keyfile
         """
         # TODO: raise exception if self.__class__.__name__ == 'ArlIndexDB' ???
 
@@ -255,22 +255,22 @@ class ArlIndexDB(object):
     SSL_KEY_AND_CERT_MUST_BOTH_BE_SPECIFIED = (
         "SSL key and cert files must both be specified or neither specified")
     def _get_ssl_config(self, config):
-        if bool(config.get('ssl_certfile')) ^ bool(config.get('ssl_keyfile')):
+        if bool(config.get('mongo_ssl_certfile')) ^ bool(config.get('mongo_ssl_keyfile')):
             raise ValueError(self.SSL_KEY_AND_CERT_MUST_BOTH_BE_SPECIFIED)
 
-        if config.get('ssl_certfile') and config.get('ssl_keyfile'):
+        if config.get('mongo_ssl_certfile') and config.get('mongo_ssl_keyfile'):
             return {
                 'ssl': True,
                 'ssl_cert_reqs': ssl.CERT_NONE,
-                'ssl_certfile': config['ssl_certfile'],
-                'ssl_keyfile': config['ssl_keyfile']
+                'ssl_certfile': config['mongo_ssl_certfile'],
+                'ssl_keyfile': config['mongo_ssl_keyfile']
             }
 
-        elif config.get('ssl_ca_certs'):
+        elif config.get('mongo_ssl_ca_certs'):
             return {
                 'ssl': True,
                 'ssl_cert_reqs': ssl.CERT_NONE,
-                'ssl_ca_certs': config['ssl_ca_certs']
+                'ssl_ca_certs': config['mongo_ssl_ca_certs']
             }
 
         else:

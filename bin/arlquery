@@ -36,16 +36,16 @@ OPTIONAL_ARGS = [
         'default': {}
     },
     {
-        'long': '--ssl-certfile',
-        'help': "ssl cert file; if specified, --ssl-keyfile must be specified too"
+        'long': '--mongo-ssl-certfile',
+        'help': "ssl cert file; if specified, --mongo-ssl-keyfile must be specified too"
     },
     {
-        'long': '--ssl-keyfile',
-        'help': "ssl key file; if specified, --ssl-certfile must be specified too"
+        'long': '--mongo-ssl-keyfile',
+        'help': "ssl key file; if specified, --mongo-ssl-certfile must be specified too"
     },
     {
-        'long': '--ssl-ca-certs',
-        'help': "can be specified instead of --ssl-certfile and --ssl-keyfile"
+        'long': '--mongo-ssl-ca-certs',
+        'help': "can be specified instead of --mongo-ssl-certfile and --mongo-ssl-keyfile"
     }
 ]
 

@@ -69,6 +69,18 @@ OPTIONAL_ARGS = [
     {
         'long': '--server-name',
         'help': "name to identify server in index data"
+    },
+    {
+        'long': '--ssl-certfile',
+        'help': "ssl cert file; if specified, --ssl-keyfile must be specified too"
+    },
+    {
+        'long': '--ssl-keyfile',
+        'help': "ssl key file; if specified, --ssl-certfile must be specified too"
+    },
+    {
+        'long': '--ssl-ca-certs',
+        'help': "can be specified instead of --ssl-certfile and --ssl-keyfile"
     }
 ]
 

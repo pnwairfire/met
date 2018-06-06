@@ -34,6 +34,18 @@ OPTIONAL_ARGS = [
         'help': "query",
         'action': scripting_args.ExtractAndSetKeyValueAction,
         'default': {}
+    },
+    {
+        'long': '--ssl-certfile',
+        'help': "ssl cert file; if specified, --ssl-keyfile must be specified too"
+    },
+    {
+        'long': '--ssl-keyfile',
+        'help': "ssl key file; if specified, --ssl-certfile must be specified too"
+    },
+    {
+        'long': '--ssl-ca-certs',
+        'help': "can be specified instead of --ssl-certfile and --ssl-keyfile"
     }
 ]
 
@@ -50,8 +62,10 @@ if __name__ == "__main__":
         epilog=EXAMPLES_STR)
 
     try:
-        files = arlindexer.MetFilesCollection(args.mongodb_url).find(**args.query)
-        dates = arlindexer.MetDatesCollection(args.mongodb_url).find(**args.query)
+        files = arlindexer.MetFilesCollection(
+            **args.__dict__).find(**args.query)
+        dates = arlindexer.MetDatesCollection(
+            **args.__dict__).find(**args.query)
         sys.stdout.write(json.dumps({
            'files': files,
            'dates': dates

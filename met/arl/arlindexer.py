@@ -12,6 +12,7 @@ import logging
 import os
 import re
 import socket
+import ssl
 import sys
 import traceback
 from collections import defaultdict
@@ -42,7 +43,8 @@ class ArlIndexer(ArlFinder):
             'mongodb://[username:password@]host[:port][/[database][?options]]'"
          - output_file -- pathname (relative of absolute) of output file to
             save index data
-        (see ArlFinder for it's config options)
+        (see ArlIndexDB for its config options)
+        (see ArlFinder for its config options)
         """
         # ArlFinder takes care of making sure met_root_dir exists
         super(ArlIndexer, self).__init__(met_root_dir, **config)
@@ -188,7 +190,7 @@ class ArlIndexer(ArlFinder):
                 if self._config.get(k):
                     try:
                         m = getattr(self, '_write_to_{}'.format(k))
-                        m(self._config[k], index_data)
+                        m(index_data)
                         succeeded = True
                     except Exception as e:
                         logging.debug(traceback.format_exc())
@@ -197,11 +199,12 @@ class ArlIndexer(ArlFinder):
             if not succeeded:
                 raise RuntimeError("Failed to record")
 
-    def _write_to_mongodb_url(self, mongodb_url, index_data):
-        MetFilesCollection(mongodb_url).update(index_data)
+    def _write_to_mongodb_url(self, index_data):
+        MetFilesCollection(**self._config).update(index_data)
         # TODO: instead of manually invoking update of dates collection
         #   here, use a trigger or have MetFilesCollection.update invoke it
-        MetDatesCollection(mongodb_url).compute_and_save(domain=self._domain)
+        MetDatesCollection(**self._config).compute_and_save(
+            domain=self._domain)
         # TODO: other hierarchies to be stored in mongodb (possibly
         #   maintained via triggers?):
         #   - met > server > date
@@ -211,25 +214,31 @@ class ArlIndexer(ArlFinder):
         #   - date > met > server
         #   - date > server > met
 
-    def _write_to_output_file(self, file_name, index_data):
-        with open(file_name, 'w') as f:
+    def _write_to_output_file(self, index_data):
+        with open(self._config['output_file'], 'w') as f:
             f.write(json.dumps(index_data))
 
 
 class ArlIndexDB(object):
 
-    def __init__(self, mongodb_url=None):
+    def __init__(self, mongodb_url=None, **config):
         """Constructor:
 
-        args
+        kwargs
          - mongodb_url -- mongodb url
             format 'mongodb://[username:password@]host[:port][/[database][?options]]'"
+
+        config options:
+         - ssl_certfile -- if specified, ssl_keyfile must be specified too
+         - ssl_keyfile -- if specified, ssl_certfile must be specified too
+         - ssl_ca_certs -- can be specified instead of ssl_certfile and
+            ssl_keyfile
         """
         # TODO: raise exception if self.__class__.__name__ == 'ArlIndexDB' ???
 
         mongodb_url, db_name = self._parse_mongodb_url(mongodb_url)
-
-        self.client = pymongo.MongoClient(mongodb_url)
+        ssl_config = self._get_ssl_config(config)
+        self.client = pymongo.MongoClient(mongodb_url, **ssl_config)
         self.db = self.client[db_name]
 
         # 'met_files' collection list available met files
@@ -242,6 +251,30 @@ class ArlIndexDB(object):
         # TODO: is this the appropriate place to call _ensure_indices
         self._ensure_indices(self.met_files)
         self._ensure_indices(self.dates)
+
+    SSL_KEY_AND_CERT_MUST_BOTH_BE_SPECIFIED = (
+        "SSL key and cert files must both be specified or neither specified")
+    def _get_ssl_config(self, config):
+        if bool(config.get('ssl_certfile')) ^ bool(config.get('ssl_keyfile')):
+            raise ValueError(self.SSL_KEY_AND_CERT_MUST_BOTH_BE_SPECIFIED)
+
+        if config.get('ssl_certfile') and config.get('ssl_keyfile'):
+            return {
+                'ssl': True,
+                'ssl_cert_reqs': ssl.CERT_NONE,
+                'ssl_certfile': config['ssl_certfile'],
+                'ssl_keyfile': config['ssl_keyfile']
+            }
+
+        elif config.get('ssl_ca_certs'):
+            return {
+                'ssl': True,
+                'ssl_cert_reqs': ssl.CERT_NONE,
+                'ssl_ca_certs': config['ssl_ca_certs']
+            }
+
+        else:
+            return {}
 
     DEFAULT_DB_NAME = 'arlindex'
     DEFAULT_DB_URL = 'mongodb://localhost/{}'.format(DEFAULT_DB_NAME)

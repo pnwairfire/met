@@ -243,7 +243,13 @@ class TestARLIndexer(object):
             'complete_dates': [datetime.date(2015,1,2)],
             'partial_dates': [datetime.date(2015,1,1)],
             'root_dir': self.arl_indexer._met_root_dir,
-            'files': files
+            'files': files,
+            'availability': [
+                {
+                    'first_hour': datetime.datetime(2015,1,1,23,0,0),
+                    'last_hour': datetime.datetime(2015,1,2,23,0,0)
+                }
+            ]
         }
 
         assert expected == self.arl_indexer._analyse(index_files,

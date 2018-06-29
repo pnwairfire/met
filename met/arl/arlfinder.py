@@ -474,3 +474,15 @@ class ArlFinder(object):
                 files[-1]['last_hour'] = dt
         return files
 
+    def _determine_availability_time_windows(self, files):
+        avail = []
+        # TODO: remove called to sorted once it's confirmed that
+        #   files will always already be sorted
+        for f in sorted(files, key=lambda _f: _f['first_hour']):
+            # Add one hour, since two windows are contiguous if
+            # the last hour of one is the first hour of the other
+            if not avail or avail[-1][1] + ONE_HOUR < f['first_hour']:
+                avail.append([f['first_hour'], f['last_hour']])
+            else:
+                avail[-1][1] = f['last_hour']
+        return avail

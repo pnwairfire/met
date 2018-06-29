@@ -156,6 +156,7 @@ class ArlIndexer(ArlFinder):
         complete_dates = [d for d in dates if len(dates[d]) == 24]
         partial_dates = list(set(dates) - set(complete_dates))
         server_name = self._config.get('server_name') or socket.gethostname()
+        availabilty = self._determine_availability_time_windows(files)
         data = {
             'server': server_name,
             'domain': self._domain,
@@ -165,7 +166,8 @@ class ArlIndexer(ArlFinder):
             'complete_dates': sorted(complete_dates),
             'partial_dates': sorted(partial_dates),
             'root_dir': self._met_root_dir,
-            'files': files
+            'files': files,
+            'availabilty': availabilty
         }
 
         # TODO: slice and dice data in another way?

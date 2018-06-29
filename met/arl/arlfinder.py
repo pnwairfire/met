@@ -481,8 +481,11 @@ class ArlFinder(object):
         for f in sorted(files, key=lambda _f: _f['first_hour']):
             # Add one hour, since two windows are contiguous if
             # the last hour of one is the first hour of the other
-            if not avail or avail[-1][1] + ONE_HOUR < f['first_hour']:
-                avail.append([f['first_hour'], f['last_hour']])
+            if not avail or avail[-1]["last_hour"] + ONE_HOUR < f['first_hour']:
+                avail.append({
+                    "first_hour": f['first_hour'],
+                    "last_hour": f['last_hour']
+                })
             else:
-                avail[-1][1] = f['last_hour']
+                avail[-1]["last_hour"] = f['last_hour']
         return avail

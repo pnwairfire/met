@@ -18,8 +18,7 @@ from met.arl import arlprofiler
 ##
 
 data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
-with open(os.path.join(data_dir, 'profile-one.txt')) as f:
-  PROFILE_ONE = f.read()
+PROFILE_ONE_FILENAME = os.path.join(data_dir, 'profile-one.txt')
 
 # HOURLY_PROFILES_ONE_HOUR_[0|1|2] contain all but surise and sunset hour,
 # since that varies according to utc offset
@@ -232,61 +231,50 @@ class TestARLProfile(object):
 
     def test_one_all_hours_with_offset(self, monkeypatch):
         self.monkeypatch_sun(monkeypatch)
-        with tempfile.NamedTemporaryFile() as f:
-            f.write(bytes(PROFILE_ONE, 'utf-8'))
-            f.flush()
-            profiler = arlprofiler.ARLProfile(f.name,
-                datetime.datetime(2014, 5, 30, 0, 0), # first
-                datetime.datetime(2014, 5, 30, 0, 0), # start
-                datetime.datetime(2014, 5, 30, 2, 0), # end
-                -7, # utc offset
-                37, # lat
-                -122) # lng
-            hourly_profiles = profiler.get_hourly_params()
-            self.check_hourly_profiles(hourly_profiles, HOURLY_PROFILES_ONE_ALL_HOURS_WITH_OFFSET)
+        profiler = arlprofiler.ARLProfile(PROFILE_ONE_FILENAME,
+            datetime.datetime(2014, 5, 30, 0, 0), # first
+            datetime.datetime(2014, 5, 30, 0, 0), # start
+            datetime.datetime(2014, 5, 30, 2, 0), # end
+            -7, # utc offset
+            37, # lat
+            -122) # lng
+        hourly_profiles = profiler.get_hourly_params()
+        self.check_hourly_profiles(hourly_profiles, HOURLY_PROFILES_ONE_ALL_HOURS_WITH_OFFSET)
 
     def test_one_all_hours_no_offset(self, monkeypatch):
         self.monkeypatch_sun(monkeypatch)
-        with tempfile.NamedTemporaryFile() as f:
-            f.write(bytes(PROFILE_ONE, 'utf-8'))
-            f.flush()
-            profiler = arlprofiler.ARLProfile(f.name,
-                datetime.datetime(2014, 5, 30, 0, 0), # first
-                datetime.datetime(2014, 5, 30, 0, 0), # start
-                datetime.datetime(2014, 5, 30, 2, 0), # end
-                0, # utc offset
-                37, # lat
-                -122) # lng
-            hourly_profiles = profiler.get_hourly_params()
-            self.check_hourly_profiles(hourly_profiles, HOURLY_PROFILES_ONE_ALL_HOURS_NO_OFFSET)
+        profiler = arlprofiler.ARLProfile(PROFILE_ONE_FILENAME,
+            datetime.datetime(2014, 5, 30, 0, 0), # first
+            datetime.datetime(2014, 5, 30, 0, 0), # start
+            datetime.datetime(2014, 5, 30, 2, 0), # end
+            0, # utc offset
+            37, # lat
+            -122) # lng
+        hourly_profiles = profiler.get_hourly_params()
+        self.check_hourly_profiles(hourly_profiles, HOURLY_PROFILES_ONE_ALL_HOURS_NO_OFFSET)
 
     def test_one_partial_with_offset(self, monkeypatch):
         self.monkeypatch_sun(monkeypatch)
-        with tempfile.NamedTemporaryFile() as f:
-            f.write(bytes(PROFILE_ONE, 'utf-8'))
-            f.flush()
-            profiler = arlprofiler.ARLProfile(f.name,
-                datetime.datetime(2014, 5, 30, 0, 0), # first
-                datetime.datetime(2014, 5, 30, 1, 0), # start
-                datetime.datetime(2014, 5, 30, 1, 0), # end
-                -7, # utc offset
-                37, # lat
-                -122) # lng
-            hourly_profiles = profiler.get_hourly_params()
-            self.check_hourly_profiles(hourly_profiles, HOURLY_PROFILES_ONE_PARTIAL_WITH_OFFSET)
+        profiler = arlprofiler.ARLProfile(PROFILE_ONE_FILENAME,
+            datetime.datetime(2014, 5, 30, 0, 0), # first
+            datetime.datetime(2014, 5, 30, 1, 0), # start
+            datetime.datetime(2014, 5, 30, 1, 0), # end
+            -7, # utc offset
+            37, # lat
+            -122) # lng
+        hourly_profiles = profiler.get_hourly_params()
+        self.check_hourly_profiles(hourly_profiles, HOURLY_PROFILES_ONE_PARTIAL_WITH_OFFSET)
 
     def test_one_partial_no_offset(self, monkeypatch):
         self.monkeypatch_sun(monkeypatch)
-        with tempfile.NamedTemporaryFile() as f:
-            f.write(bytes(PROFILE_ONE, 'utf-8'))
-            f.flush()
-            profiler = arlprofiler.ARLProfile(f.name,
-                datetime.datetime(2014, 5, 30, 0, 0), # first
-                datetime.datetime(2014, 5, 30, 1, 0), # start
-                datetime.datetime(2014, 5, 30, 1, 0), # end
-                0, # utc offset
-                37, # lat
-                -122) # lng
-            hourly_profiles = profiler.get_hourly_params()
-            self.check_hourly_profiles(hourly_profiles, HOURLY_PROFILES_ONE_PARTIAL_NO_OFFSET)
+        profiler = arlprofiler.ARLProfile(PROFILE_ONE_FILENAME,
+            datetime.datetime(2014, 5, 30, 0, 0), # first
+            datetime.datetime(2014, 5, 30, 1, 0), # start
+            datetime.datetime(2014, 5, 30, 1, 0), # end
+            0, # utc offset
+            37, # lat
+            -122) # lng
+        hourly_profiles = profiler.get_hourly_params()
+        self.check_hourly_profiles(hourly_profiles, HOURLY_PROFILES_ONE_PARTIAL_NO_OFFSET)
+
 

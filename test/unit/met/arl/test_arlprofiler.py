@@ -83,7 +83,7 @@ class TestARLProfileOne(BaseTestARLProfile):
             -122) # lng
         hourly_profiles = profiler.get_hourly_params()
         self.check_hourly_profiles(hourly_profiles,
-            expected_profile_one.HOURLY_PROFILES_ONE_ALL_HOURS_WITH_OFFSET)
+            expected_profile_one.HOURLY_PROFILES_ALL_HOURS_WITH_OFFSET)
 
     def test_all_hours_no_offset(self, monkeypatch):
         self.monkeypatch_sun(monkeypatch)
@@ -96,7 +96,7 @@ class TestARLProfileOne(BaseTestARLProfile):
             -122) # lng
         hourly_profiles = profiler.get_hourly_params()
         self.check_hourly_profiles(hourly_profiles,
-            expected_profile_one.HOURLY_PROFILES_ONE_ALL_HOURS_NO_OFFSET)
+            expected_profile_one.HOURLY_PROFILES_ALL_HOURS_NO_OFFSET)
 
     def test_partial_with_offset(self, monkeypatch):
         self.monkeypatch_sun(monkeypatch)
@@ -109,7 +109,7 @@ class TestARLProfileOne(BaseTestARLProfile):
             -122) # lng
         hourly_profiles = profiler.get_hourly_params()
         self.check_hourly_profiles(hourly_profiles,
-            expected_profile_one.HOURLY_PROFILES_ONE_PARTIAL_WITH_OFFSET)
+            expected_profile_one.HOURLY_PROFILES_PARTIAL_WITH_OFFSET)
 
     def test_partial_no_offset(self, monkeypatch):
         self.monkeypatch_sun(monkeypatch)
@@ -122,6 +122,6 @@ class TestARLProfileOne(BaseTestARLProfile):
             -122) # lng
         hourly_profiles = profiler.get_hourly_params()
         self.check_hourly_profiles(hourly_profiles,
-            expected_profile_one.HOURLY_PROFILES_ONE_PARTIAL_NO_OFFSET)
+            expected_profile_one.HOURLY_PROFILES_PARTIAL_NO_OFFSET)
 
 

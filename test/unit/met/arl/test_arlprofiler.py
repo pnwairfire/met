@@ -125,3 +125,56 @@ class TestARLProfileOne(BaseTestARLProfile):
             expected_profile_one.HOURLY_PROFILES_PARTIAL_NO_OFFSET)
 
 
+class TestARLProfileNam12kmWithAsterisks(BaseTestARLProfile):
+
+    def test_four_hours_with_offset(self, monkeypatch):
+        self.monkeypatch_sun(monkeypatch)
+        profiler = arlprofiler.ARLProfile(PROFILE_WITH_ASTERISKS_FILENAME,
+            datetime.datetime(2015, 8, 9, 0, 0), # first
+            datetime.datetime(2015, 8, 9, 0, 0), # start
+            datetime.datetime(2015, 8, 9, 3, 0), # end
+            -7, # utc offset
+            41.77, # lat
+            -123.97) # lng
+        hourly_profiles = profiler.get_hourly_params()
+        self.check_hourly_profiles(hourly_profiles,
+            expected_nam12km.HOURLY_PROFILES_ALL_HOURS_WITH_OFFSET)
+
+    def test_four_hours_no_offset(self, monkeypatch):
+        self.monkeypatch_sun(monkeypatch)
+        profiler = arlprofiler.ARLProfile(PROFILE_WITH_ASTERISKS_FILENAME,
+            datetime.datetime(2015, 8, 9, 0, 0), # first
+            datetime.datetime(2015, 8, 9, 0, 0), # start
+            datetime.datetime(2015, 8, 9, 3, 0), # end
+            0, # utc offset
+            41.77, # lat
+            -123.97) # lng
+        hourly_profiles = profiler.get_hourly_params()
+        self.check_hourly_profiles(hourly_profiles,
+            expected_nam12km.HOURLY_PROFILES_ALL_HOURS_NO_OFFSET)
+
+    def test_partial_with_offset(self, monkeypatch):
+        self.monkeypatch_sun(monkeypatch)
+        profiler = arlprofiler.ARLProfile(PROFILE_WITH_ASTERISKS_FILENAME,
+            datetime.datetime(2015, 8, 9, 0, 0), # first
+            datetime.datetime(2015, 8, 9, 0, 0), # start
+            datetime.datetime(2015, 8, 9, 0, 0), # end
+            -7, # utc offset
+            41.77, # lat
+            -123.97) # lng
+        hourly_profiles = profiler.get_hourly_params()
+        self.check_hourly_profiles(hourly_profiles,
+            expected_nam12km.HOURLY_PROFILES_PARTIAL_WITH_OFFSET)
+
+    def test_partial_no_offset(self, monkeypatch):
+        self.monkeypatch_sun(monkeypatch)
+        profiler = arlprofiler.ARLProfile(PROFILE_WITH_ASTERISKS_FILENAME,
+            datetime.datetime(2015, 8, 9, 0, 0), # first
+            datetime.datetime(2015, 8, 9, 0, 0), # start
+            datetime.datetime(2015, 8, 9, 0, 0), # end
+            0, # utc offset
+            41.77, # lat
+            -123.97) # lng
+        hourly_profiles = profiler.get_hourly_params()
+        self.check_hourly_profiles(hourly_profiles,
+            expected_nam12km.HOURLY_PROFILES_PARTIAL_NO_OFFSET)

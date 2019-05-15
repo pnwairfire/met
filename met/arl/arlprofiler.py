@@ -312,6 +312,9 @@ class ARLProfile(object):
                     hour_step = []
                 if read_data:
                     hour_step.append(line)
+        if read_data:
+            profile.append(hour_step)
+
         if [] in profile: profile.remove([])
 
         if profile == []: return {}

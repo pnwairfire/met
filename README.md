@@ -56,10 +56,10 @@ First, install pip (with sudo if necessary):
 
     apt-get install python-pip
 
-Then, to install, for example, v1.2.2, use the following (with sudo if
+Then, to install, for example, v1.2.3, use the following (with sudo if
 necessary):
 
-    pip install --extra-index https://pypi.airfire.org/simple met==1.2.2
+    pip install --extra-index https://pypi.airfire.org/simple met==1.2.3
 
 If you get an error like    ```AttributeError: 'NoneType' object has no attribute 'skip_requirements_regex```, it means you need in upgrade pip.  One way to do so is with the following:
 

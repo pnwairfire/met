@@ -46,10 +46,10 @@ class TestARLFinderSettingAcceptedForecastsFromConfig(object):
 
     def test_invalid_values(self):
         accepted_forecasts = ["sdfsdf", 1]
-        with raises(ValueError) as e:
+        with raises(ValueError) as e_info:
             arlfinder.ArlFinder(tempfile.mkdtemp(),
                 accepted_forecasts=accepted_forecasts)
-        assert e.value.args[0] == "Invalid datetime format 'sdfsdf'"
+        assert e_info.value.args[0] == "Invalid datetime format 'sdfsdf'"
 
     def test_mixed_formats(self):
         accepted_forecasts = [

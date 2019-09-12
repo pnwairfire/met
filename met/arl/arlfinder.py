@@ -232,12 +232,19 @@ class ArlFinder(object):
 
     _DATETIME_EXTRA_FORMATS = [
         '%Y%m%dT%H:%M:%S', '%Y%m%dT%H:%M:%SZ',
-        '%Y%m%dT%H', '%Y%m%dT%HZ', "%Y%m%d%H", "%Y-%m-%d %HZ"
+        '%Y%m%dT%H', '%Y%m%dT%HZ', '%Y-%m-%dT%H', '%Y-%m-%dT%HZ',
+        "%Y%m%d%H", "%Y-%m-%d %HZ"
     ]
+
+    def _to_datetime(self, val):
+      val = parse_dt(val, extra_formats=self._DATETIME_EXTRA_FORMATS)
+      if not isinstance(val, datetime.datetime):
+          val = datetime.datetime(val.year, val.month, val.day)
+      return val
 
     def _get_accepted_forecasts(self, config):
         if config.get('accepted_forecasts'):
-            return sorted([parse_dt(i, extra_formats=_DATETIME_EXTRA_FORMATS)
+            return sorted([self._to_datetime(i)
                 for i in config['accepted_forecasts']])
         # else, returns None
 

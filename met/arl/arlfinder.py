@@ -256,6 +256,9 @@ class ArlFinder(object):
     # TODO: add '$' after date?
     ALL_DATE_MATCHER = re.compile('.*(\d{10})')
 
+    ACCEPTED_FORECASTS_OUTSIDE_TIME_WINDOW_ERROR_MSG = (
+      "Accepted forecasts are all outside time window")
+
     def _create_date_matcher(self, start, end):
         """Returns a compiled regex object that matches %Y%m%d[%H] date strings
         for all dates between start and end, plus N days prior.  If neither
@@ -268,12 +271,11 @@ class ArlFinder(object):
         """
         # By this point start and end will either both be defined or not
         if start and end:
-
             if self._accepted_forecasts:
                 forecasts = [d for d in self._accepted_forecasts
                     if start <= d and d <= end]
                 if not forecasts:
-                    raise ValueError("Accepted forecasts are all outside time window")
+                    raise ValueError(self.ACCEPTED_FORECASTS_OUTSIDE_TIME_WINDOW_ERROR_MSG)
                 # going off of whitelist of specific forecasts, so include
                 # initialization hour in each datetime string
                 date_strs = [d.strftime('%Y%m%d%H') for d in forecasts]

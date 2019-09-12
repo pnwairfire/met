@@ -98,10 +98,6 @@ class TestARLFinderCreateDateMatcher(object):
         m = self.arl_finder._create_date_matcher(s,e)
         assert m.pattern == '.*(20141231|20150101|20150102|20150103|20150104)'
 
-        assert arlfinder.ArlFinder.ALL_DATE_MATCHER == self.arl_finder._create_date_matcher(None, e)
-        assert arlfinder.ArlFinder.ALL_DATE_MATCHER == self.arl_finder._create_date_matcher(s, None)
-        assert arlfinder.ArlFinder.ALL_DATE_MATCHER == self.arl_finder._create_date_matcher(None, None)
-
     def test_with_accepted_forecasts_all_within_time_window(self):
         self.arl_finder._accepted_forecasts = [
             datetime.datetime(2015, 1, 2),

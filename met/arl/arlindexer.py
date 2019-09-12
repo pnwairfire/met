@@ -138,6 +138,9 @@ class ArlIndexer(ArlFinder):
     ## Reorganizing data for index
     ##
 
+    # TODO: add '$' after date?
+    ALL_DATE_MATCHER = re.compile('.*(\d{10})')
+
     def _parse_latest_forecast(self, index_files):
         if index_files:
             # index_files should aleady be sorted, but sort again just to be safe

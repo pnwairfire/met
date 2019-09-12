@@ -44,9 +44,9 @@ class BaseTestARLProfile(object):
             if isinstance(a, float):
                 # assert_almost_equal(actual, desired, decimal=7, err_msg='', verbose=True)
                 assert_approx_equal(a, e,
-                    err_msg="Non-equal {} value - {} != {}".format(k, a, e))
+                    err_msg="Non-equal {} value: {} != {}".format(k, a, e))
             else:
-                assert a == e
+                assert a == e, "Non-equal {} value: {} != {}".format(k, a, e)
 
         assert set(expected.keys()) == set(actual.keys())
         for dt in expected:

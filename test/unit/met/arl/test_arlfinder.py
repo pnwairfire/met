@@ -112,7 +112,7 @@ class TestARLFinderCreateDateMatcher(object):
         m = self.arl_finder._create_date_matcher(s,e)
         assert m.pattern == '.*(2015010200|2015010212)'
 
-    def test_with_accepted_forecasts_all_within_time_window(self):
+    def test_with_accepted_forecasts_within_and_outside_time_window(self):
         self.arl_finder._accepted_forecasts = [
             datetime.datetime(2015, 1, 2),
             datetime.datetime(2015, 1, 2, 12),

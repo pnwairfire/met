@@ -843,3 +843,83 @@ class TestARLFinderFind(object):
             ]
         }
         assert actual == expected
+
+
+    def test_with_accepted_forecasts_w_match_20151102(self, monkeypatch):
+        monkeypatch.setattr(os.path, "isfile",
+            lambda name: True)
+        s = datetime.datetime(2015, 11, 1, 14)
+        e = datetime.datetime(2015, 11, 4, 2)
+        arl_finder = arlfinder.ArlFinder(self.root_dir,
+            accepted_forecasts=['2015110100', '2015110200'])
+        actual = arl_finder.find(s, e)
+        expected = {
+            'files': [
+                {
+                    'file': '/storage/NWRMC/4km/2015110200/wrfout_d3.2015110100.f24-35_12hr02.arl',
+                    'first_hour': '2015-11-02T00:00:00',
+                    'last_hour': '2015-11-02T11:00:00'
+                },
+                {
+                    'file': '/storage/NWRMC/4km/2015110200/wrfout_d3.2015110200.f12-23_12hr01.arl',
+                    'first_hour': '2015-11-02T12:00:00',
+                    'last_hour': '2015-11-02T23:00:00'
+                },
+                {
+                    'file': '/storage/NWRMC/4km/2015110200/wrfout_d3.2015110200.f24-35_12hr02.arl',
+                    'first_hour': '2015-11-03T00:00:00',
+                    'last_hour': '2015-11-03T11:00:00'
+                },
+                {
+                    'file': '/storage/NWRMC/4km/2015110200/wrfout_d3.2015110200.f36-47_12hr03.arl',
+                    'first_hour': '2015-11-03T12:00:00',
+                    'last_hour': '2015-11-03T23:00:00'
+                },
+                {
+                    'file': '/storage/NWRMC/4km/2015110200/wrfout_d3.2015110200.f48-59_12hr04.arl',
+                    'first_hour': '2015-11-04T00:00:00',
+                    'last_hour': '2015-11-04T02:00:00'
+                }
+            ]
+        }
+        assert actual == expected
+
+    def test_with_accepted_forecasts_w_match_20151103(self, monkeypatch):
+        monkeypatch.setattr(os.path, "isfile",
+            lambda name: True)
+        s = datetime.datetime(2015, 11, 1, 14)
+        e = datetime.datetime(2015, 11, 4, 2)
+        arl_finder = arlfinder.ArlFinder(self.root_dir,
+            accepted_forecasts=['2015110300'])
+        actual = arl_finder.find(s, e)
+        expected = {
+            'files': [
+                {
+                    'file': '/storage/NWRMC/4km/2015110300/wrfout_d3.2015110200.f24-35_12hr02.arl',
+                    'first_hour': '2015-11-03T00:00:00',
+                    'last_hour': '2015-11-03T11:00:00'
+                },
+                {
+                    'file': '/storage/NWRMC/4km/2015110300/wrfout_d3.2015110300.f12-23_12hr01.arl',
+                    'first_hour': '2015-11-03T12:00:00',
+                    'last_hour': '2015-11-03T23:00:00'
+                },
+                {
+                    'file': '/storage/NWRMC/4km/2015110300/wrfout_d3.2015110300.f24-35_12hr02.arl',
+                    'first_hour': '2015-11-04T00:00:00',
+                    'last_hour': '2015-11-04T02:00:00'
+                }
+            ]
+        }
+        assert actual == expected
+
+    def test_with_accepted_forecasts_no_match(self, monkeypatch):
+        monkeypatch.setattr(os.path, "isfile",
+            lambda name: True)
+        s = datetime.datetime(2015, 11, 1, 14)
+        e = datetime.datetime(2015, 11, 4, 2)
+        arl_finder = arlfinder.ArlFinder(self.root_dir,
+            accepted_forecasts=['2015110400'])
+        actual = arl_finder.find(s, e)
+        expected = {'files': []}
+        assert actual == expected

@@ -392,8 +392,8 @@ class ARLProfile(object):
 
         # back-fill first hour's values, if they are empty
         # These opaque variable names are defined by the ARL standard, and are described in types.ini
-        if (float(self.hourly_profile[self.first]["PRSS"][0]) == 0.0
-                and float(self.hourly_profile[self.first]["T02M"][0]) == 0.0):
+        if (self.to_float(self.hourly_profile[self.first]["PRSS"][0]) == 0.0
+                and self.to_float(self.hourly_profile[self.first]["T02M"][0]) == 0.0):
             keys = [
                 'pressure_at_surface', 'TPP3', 'T02M', 'RH2M', 'U10M', 'V10M', 'PRSS'
             ]
@@ -406,12 +406,12 @@ class ARLProfile(object):
         This data is all nonsense, so it needs to be removed.
         """
         for dt, param_dict in list(self.hourly_profile.items()):
-            surface_p = float(param_dict['pressure_at_surface'][0])
-            if surface_p > float(param_dict['pressure'][0]) or surface_p < float(param_dict['pressure'][-1]):
+            surface_p = self.to_float(param_dict['pressure_at_surface'][0])
+            if surface_p > self.to_float(param_dict['pressure'][0]) or surface_p < self.to_float(param_dict['pressure'][-1]):
                 continue
             new_dict = {}
             for i in range(len(param_dict['pressure'])):
-                if float(param_dict['pressure'][i]) < surface_p:
+                if self.to_float(param_dict['pressure'][i]) < surface_p:
                     surface_index = i
                     break
             for k in list(param_dict.keys()):
@@ -420,7 +420,7 @@ class ARLProfile(object):
                     new_array = []
                     for j in range(len(param_dict[k])):
                         if j >= surface_index:
-                            new_array.append(float(param_dict[k][j]))
+                            new_array.append(self.to_float(param_dict[k][j]))
                     new_dict[k] = new_array
                 elif len(param_dict[k]) == 1:
                     new_dict[k] = param_dict[k]
@@ -459,9 +459,14 @@ class ARLProfile(object):
                 if hasattr(hp[k], 'append'):
                     for i in range(len(hp[k])):
                         if hasattr(hp[k][i], 'strip'):
-                            hp[k][i] = float(hp[k][i])
+                            hp[k][i] = self.to_float(hp[k][i])
                 elif hasattr(hp[k], 'strip'):
-                    hp[k] = float(hp[k])
+                    hp[k] = self.to_float(hp[k])
+
+    def to_float(self, val):
+        if val != 'None' and val is not None:
+            return float(val)
+        # else returns None
 
     def fill_in_fields(self):
         # The following is from BSF
@@ -513,9 +518,9 @@ class ARLProfile(object):
         a = hourly_profile.get(k)
         if a is not None:
             if hasattr(a, 'append'):
-                hourly_profile[k] = float(a[0])
+                hourly_profile[k] = self.to_float(a[0])
             elif hasattr(a, 'strip'):
-                hourly_profile[k] = float(a)
+                hourly_profile[k] = self.to_float(a)
             # else, leave as is
         else:
             hourly_profile[k] = default()
@@ -527,10 +532,10 @@ class ARLProfile(object):
 
         dp = []
         for i in range(len(rh)):
-            if float(rh[i]) < 1.0:
-                dp.append((-5321.0 / ((-5.0) - (5321.0 / (273.0 + float(temp[i]))))) - 273.0)
+            if self.to_float(rh[i]) < 1.0:
+                dp.append((-5321.0 / ((-5.0) - (5321.0 / (273.0 + self.to_float(temp[i]))))) - 273.0)
             else:
-                dp.append((-5321.0 / ((log(float(rh[i])/100.0)) - (5321.0 / (273.0 + float(temp[i]))))) - 273.0)
+                dp.append((-5321.0 / ((log(self.to_float(rh[i])/100.0)) - (5321.0 / (273.0 + self.to_float(temp[i]))))) - 273.0)
 
         return dp
 
@@ -545,7 +550,7 @@ class ARLProfile(object):
         if not pressure or not sphu or not temp:
             return None
 
-        rh = list(map(lambda s,p,t: (float(s) * float(p) / 0.622) / (exp(21.4 - (5351.0 /(float(t) + 273.15)))), sphu,pressure,temp))
+        rh = list(map(lambda s,p,t: (self.to_float(s) * self.to_float(p) / 0.622) / (exp(21.4 - (5351.0 /(self.to_float(t) + 273.15)))), sphu,pressure,temp))
         # The above calculation is off by a factor of 10. Divide all values by 10
         return [h / 10.0 for h in rh]
 
@@ -562,7 +567,7 @@ class ARLProfile(object):
         if not pressure:
             return None
 
-        return [(self.T_REF/(self.LAPSE_RATE*0.001))*(1.0 - pow(float(p)/self.P_SURFACE, self.Rd*self.LAPSE_RATE*0.001/self.G)) for p in pressure]
+        return [(self.T_REF/(self.LAPSE_RATE*0.001))*(1.0 - pow(self.to_float(p)/self.P_SURFACE, self.Rd*self.LAPSE_RATE*0.001/self.G)) for p in pressure]
 
     def utc_to_local(self):
         # profile dict will contain local met data index by *local* time

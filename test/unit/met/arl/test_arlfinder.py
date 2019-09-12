@@ -120,7 +120,8 @@ class TestARLFinderCreateDateMatcher(object):
         assert m.pattern == '.*(2015010200|2015010212)'
 
 
-class TestARLFinder(object):
+class TestARLFinderParseIndexFiles(object):
+    """Unit test for _parse_index_files and _parse_index_file"""
 
     def setup(self):
         self.arl_finder = arlfinder.ArlFinder(tempfile.mkdtemp())
@@ -180,14 +181,21 @@ class TestARLFinder(object):
         ]
         assert expected == self.arl_finder._parse_index_file('foo')
 
-    # TODO: test _get_file_pathnam, monkeypatching os.path.abspath,
-    #    os.path.isfile, etc. appropriately
+
+# TODO: test _get_file_pathnam, monkeypatching os.path.abspath,
+#    os.path.isfile, etc. appropriately
+
+
+class TestARLFinderPruneAndSort(object):
+
+    def setup(self):
+        self.arl_finder = arlfinder.ArlFinder(tempfile.mkdtemp())
 
     ##
     ## Pruning and Sorting
     ##
 
-    def test_prune_and_sort_case_1(self):
+    def test_case_1(self):
         """Tests cases where met data is 24 hr predictions over
         two 12-hr files every 12 hours.
         """
@@ -279,7 +287,7 @@ class TestARLFinder(object):
         assert expected == self.arl_finder._prune_and_sort(arl_files,
             datetime.datetime(2015,1,2,2,0,0), datetime.datetime(2015,1,2,4,0,0))
 
-    def test_prune_and_sort_case_2(self):
+    def test_case_2(self):
         """Tests cases where met data is 48 hr predictions over
         two 24-hr files every 12 hours.
         """

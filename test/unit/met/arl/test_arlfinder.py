@@ -119,6 +119,18 @@ class TestARLFinderCreateDateMatcher(object):
         m = self.arl_finder._create_date_matcher(s,e)
         assert m.pattern == '.*(2015010200|2015010212)'
 
+    def test_with_accepted_forecasts_all_outside_time_window(self):
+        self.arl_finder._accepted_forecasts = [
+            datetime.datetime(2015, 1, 6),
+            datetime.datetime(2015, 1, 6, 12),
+            datetime.datetime(2015, 1, 7, 12)  # <-- outside of time window
+        ]
+        s = datetime.datetime(2015, 1, 1, 14)
+        e = datetime.datetime(2015, 1, 4, 2)
+        with raises(ValueError) as e_info:
+            self.arl_finder._create_date_matcher(s,e)
+        assert e_info.value.args[0] == self.arl_finder.ACCEPTED_FORECASTS_OUTSIDE_TIME_WINDOW_ERROR_MSG
+
 
 class TestARLFinderParseIndexFiles(object):
     """Unit test for _parse_index_files and _parse_index_file"""

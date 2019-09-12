@@ -38,6 +38,48 @@ INDEX_2015110300 = """filename,start,end,interval
 /path/to/NWRMC/4km/2015110300/wrfout_d3.2015110300.f72-83_12hr06.arl,2015-11-06 00:00:00,2015-11-06 11:00:00,12
 """
 
+class TestARLFinderSettingAcceptedForecastsFromConfig(object):
+
+    def test_not_defined(self):
+        arl_finder = arlfinder.ArlFinder(tempfile.mkdtemp())
+        assert arl_finder._accepted_forecasts == None
+
+    def test_invalid_values(self):
+        accepted_forecasts = ["sdfsdf", 1]
+        with raises(ValueError) as e:
+            arlfinder.ArlFinder(tempfile.mkdtemp(),
+                accepted_forecasts=accepted_forecasts)
+        assert e.value.args[0] == "Invalid datetime format 'sdfsdf'"
+
+    def test_mixed_formats(self):
+        accepted_forecasts = [
+            "2019-07-01",
+            "2019-07-01T12Z",
+            "20190701T18Z",
+            datetime.date(2019, 7, 2),
+            datetime.datetime(2019, 7, 2, 6),
+            "2019-07-03T00",
+            "20190703T06",
+            "2019-07-03 18Z",
+            "2019-07-04T00:00:00",
+            "2019-07-04T03:00:00"
+        ]
+        arl_finder = arlfinder.ArlFinder(tempfile.mkdtemp(),
+            accepted_forecasts=accepted_forecasts)
+        assert arl_finder._accepted_forecasts == [
+            datetime.datetime(2019, 7, 1),
+            datetime.datetime(2019, 7, 1, 12),
+            datetime.datetime(2019, 7, 1, 18),
+            datetime.datetime(2019, 7, 2),
+            datetime.datetime(2019, 7, 2, 6),
+            datetime.datetime(2019, 7, 3, 0),
+            datetime.datetime(2019, 7, 3, 6),
+            datetime.datetime(2019, 7, 3, 18),
+            datetime.datetime(2019, 7, 4),
+            datetime.datetime(2019, 7, 4, 3)
+        ]
+
+
 class TestARLFinder(object):
     def setup(self):
         self.arl_finder = arlfinder.ArlFinder(tempfile.mkdtemp())

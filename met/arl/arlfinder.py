@@ -435,8 +435,13 @@ class ArlFinder(object):
                 by_first_hour[f['first_hour']].append(f)
             # else, not in time window
 
-        # get most recent of each group
-        arl_files = [sorted(files, key=lambda f: f['first_hour'])[-1] for first_hour, files in
+        # get most file recent of each group; this assumes that file names,
+        # when sorted alphabetically, are also sorted by forecast init time
+        # TODO: record the forecast init time (which should be the start
+        #   time of the first file in each index csv) to which each arl file
+        #   belongs, and sort each group of arl files by that instead of by
+        #   file name
+        arl_files = [sorted(files, key=lambda f: f['file'])[-1] for first_hour, files in
             sorted(list(by_first_hour.items()), key=lambda e: e[0])]
 
         # remove unecessary at beginning and end

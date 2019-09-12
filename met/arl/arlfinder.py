@@ -270,11 +270,14 @@ class ArlFinder(object):
         if start and end:
 
             if self._accepted_forecasts:
+                forecasts = [d for d in self._accepted_forecasts
+                    if start <= d and d <= end]
+                if not forecasts:
+                    raise ValueError("Accepted forecasts are all outside time window")
                 # going off of whitelist of specific forecasts, so include
                 # initialization hour in each datetime string
-                date_strs = [d.strftime('%Y%m%d%H')
-                    for d in self._accepted_forecasts
-                    if start <= d and d <= end]
+                date_strs = [d.strftime('%Y%m%d%H') for d in forecasts]
+
 
             else:
                 num_days = (end.date()-start.date()).days

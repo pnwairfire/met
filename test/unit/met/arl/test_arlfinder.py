@@ -7,6 +7,7 @@ import copy
 import datetime
 import tempfile
 import io # for monkeypatching
+import os
 
 from py.test import raises
 
@@ -18,7 +19,8 @@ from met.arl import arlfinder
 ## Tests for ArlFinder
 ##
 
-INDEX_2015110200 = """filename,start,end,interval
+INDEX_CONTENTS = {
+    '2015110200': """filename,start,end,interval
 /storage/NWRMC/4km/2015110200/wrfout_d3.2015110100.f24-35_12hr02.arl,2015-11-02 00:00:00,2015-11-02 11:00:00,12
 /storage/NWRMC/4km/2015110200/wrfout_d3.2015110200.f12-23_12hr01.arl,2015-11-02 12:00:00,2015-11-02 23:00:00,12
 /storage/NWRMC/4km/2015110200/wrfout_d3.2015110200.f24-35_12hr02.arl,2015-11-03 00:00:00,2015-11-03 11:00:00,12
@@ -26,17 +28,17 @@ INDEX_2015110200 = """filename,start,end,interval
 /storage/NWRMC/4km/2015110200/wrfout_d3.2015110200.f48-59_12hr04.arl,2015-11-04 00:00:00,2015-11-04 11:00:00,12
 /storage/NWRMC/4km/2015110200/wrfout_d3.2015110200.f60-71_12hr05.arl,2015-11-04 12:00:00,2015-11-04 23:00:00,12
 /storage/NWRMC/4km/2015110200/wrfout_d3.2015110200.f72-83_12hr06.arl,2015-11-05 00:00:00,2015-11-05 11:00:00,12
+""",
+    '2015110300': """filename,start,end,interval
+/storage/NWRMC/4km/2015110300/wrfout_d3.2015110200.f24-35_12hr02.arl,2015-11-03 00:00:00,2015-11-03 11:00:00,12
+/storage/NWRMC/4km/2015110300/wrfout_d3.2015110300.f12-23_12hr01.arl,2015-11-03 12:00:00,2015-11-03 23:00:00,12
+/storage/NWRMC/4km/2015110300/wrfout_d3.2015110300.f24-35_12hr02.arl,2015-11-04 00:00:00,2015-11-04 11:00:00,12
+/storage/NWRMC/4km/2015110300/wrfout_d3.2015110300.f36-47_12hr03.arl,2015-11-04 12:00:00,2015-11-04 23:00:00,12
+/storage/NWRMC/4km/2015110300/wrfout_d3.2015110300.f48-59_12hr04.arl,2015-11-05 00:00:00,2015-11-05 11:00:00,12
+/storage/NWRMC/4km/2015110300/wrfout_d3.2015110300.f60-71_12hr05.arl,2015-11-05 12:00:00,2015-11-05 23:00:00,12
+/storage/NWRMC/4km/2015110300/wrfout_d3.2015110300.f72-83_12hr06.arl,2015-11-06 00:00:00,2015-11-06 11:00:00,12
 """
-
-INDEX_2015110300 = """filename,start,end,interval
-/path/to/NWRMC/4km/2015110300/wrfout_d3.2015110200.f24-35_12hr02.arl,2015-11-03 00:00:00,2015-11-03 11:00:00,12
-/path/to/NWRMC/4km/2015110300/wrfout_d3.2015110300.f12-23_12hr01.arl,2015-11-03 12:00:00,2015-11-03 23:00:00,12
-/path/to/NWRMC/4km/2015110300/wrfout_d3.2015110300.f24-35_12hr02.arl,2015-11-04 00:00:00,2015-11-04 11:00:00,12
-/path/to/NWRMC/4km/2015110300/wrfout_d3.2015110300.f36-47_12hr03.arl,2015-11-04 12:00:00,2015-11-04 23:00:00,12
-/path/to/NWRMC/4km/2015110300/wrfout_d3.2015110300.f48-59_12hr04.arl,2015-11-05 00:00:00,2015-11-05 11:00:00,12
-/path/to/NWRMC/4km/2015110300/wrfout_d3.2015110300.f60-71_12hr05.arl,2015-11-05 12:00:00,2015-11-05 23:00:00,12
-/path/to/NWRMC/4km/2015110300/wrfout_d3.2015110300.f72-83_12hr06.arl,2015-11-06 00:00:00,2015-11-06 11:00:00,12
-"""
+}
 
 class TestARLFinderSettingAcceptedForecastsFromConfig(object):
 
@@ -151,7 +153,7 @@ class TestARLFinderParseIndexFiles(object):
 
     def test_parse_index_file(self, monkeypatch):
         monkeypatch.setattr(p_io.Stream, "_open_file",
-            lambda s: io.StringIO(INDEX_2015110200))
+            lambda s: io.StringIO(INDEX_CONTENTS['2015110200']))
         monkeypatch.setattr(self.arl_finder, "_get_file_pathname",
             lambda i, n: n)
         expected = [
@@ -765,3 +767,79 @@ class TestARLFinderWindowDetermination(object):
             self.arl_finder._determine_files_per_hour(arl_files,
             datetime.datetime(2015,1,1,19,0,0), datetime.datetime(2015,1,2,15,0,0)))
         assert expected == actual
+
+
+
+class TestARLFinderFind(object):
+
+    def _create_index_csv(self, date_str):
+        forecast_dir = os.path.join(self.root_dir, date_str)
+        os.makedirs(forecast_dir)
+        with open(os.path.join(forecast_dir, 'arl12hrindex.csv'), 'w') as f:
+            f.write(INDEX_CONTENTS[date_str])
+
+    def setup(self):
+        self.root_dir = tempfile.mkdtemp()
+        self._create_index_csv('2015110200')
+        self._create_index_csv('2015110300')
+
+    def test_no_start_or_end(self):
+        arl_finder = arlfinder.ArlFinder(self.root_dir)
+
+        with raises(ValueError) as e_info:
+            arl_finder.find(None, datetime.datetime(2015,1,5))
+        assert e_info.value.args[0] == arl_finder.START_AND_END_REQUIRED
+
+        with raises(ValueError) as e_info:
+            arl_finder.find(datetime.datetime(2015,1,2), None)
+        assert e_info.value.args[0] == arl_finder.START_AND_END_REQUIRED
+
+        with raises(ValueError) as e_info:
+            arl_finder.find(None, None)
+        assert e_info.value.args[0] == arl_finder.START_AND_END_REQUIRED
+
+    def test_no_config_no_matches(self, monkeypatch):
+        monkeypatch.setattr(os.path, "isfile",
+            lambda name: True)
+        s = datetime.datetime(2015, 1, 1, 14)
+        e = datetime.datetime(2015, 1, 4, 2)
+        r = arlfinder.ArlFinder(self.root_dir).find(s, e)
+        expected = {'files': []}
+        assert r == expected
+
+    def test_no_config_w_matches(self, monkeypatch):
+        monkeypatch.setattr(os.path, "isfile",
+            lambda name: True)
+        s = datetime.datetime(2015, 11, 1, 14)
+        e = datetime.datetime(2015, 11, 4, 2)
+        actual = arlfinder.ArlFinder(self.root_dir).find(s, e)
+        expected = {
+            'files': [
+                {
+                    'file': '/storage/NWRMC/4km/2015110200/wrfout_d3.2015110100.f24-35_12hr02.arl',
+                    'first_hour': '2015-11-02T00:00:00',
+                    'last_hour': '2015-11-02T11:00:00'
+                },
+                {
+                    'file': '/storage/NWRMC/4km/2015110200/wrfout_d3.2015110200.f12-23_12hr01.arl',
+                    'first_hour': '2015-11-02T12:00:00',
+                    'last_hour': '2015-11-02T23:00:00'
+                },
+                {
+                    'file': '/storage/NWRMC/4km/2015110300/wrfout_d3.2015110200.f24-35_12hr02.arl',
+                    'first_hour': '2015-11-03T00:00:00',
+                    'last_hour': '2015-11-03T11:00:00'
+                },
+                {
+                    'file': '/storage/NWRMC/4km/2015110300/wrfout_d3.2015110300.f12-23_12hr01.arl',
+                    'first_hour': '2015-11-03T12:00:00',
+                    'last_hour': '2015-11-03T23:00:00'
+                },
+                {
+                    'file': '/storage/NWRMC/4km/2015110300/wrfout_d3.2015110300.f24-35_12hr02.arl',
+                    'first_hour': '2015-11-04T00:00:00',
+                    'last_hour': '2015-11-04T02:00:00'
+                }
+            ]
+        }
+        assert actual == expected

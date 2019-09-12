@@ -160,6 +160,9 @@ class ArlFinder(object):
         self._accepted_forecasts = self._get_accepted_forecasts(config)
 
 
+    START_AND_END_REQUIRED = (
+        'Start and end times must be defined to find arl data')
+
     def find(self, start, end):
         """finds met data spanning start/end time window
 
@@ -213,8 +216,7 @@ class ArlFinder(object):
           where 'domain' would be set to 'LatLon' if spacing is in degrees
         """
         if not start or not end:
-            raise ValueError(
-                'Start and end times must be defined to find arl data')
+            raise ValueError(self.START_AND_END_REQUIRED)
 
         date_matcher = self._create_date_matcher(start, end)
         index_files = self._find_index_files(date_matcher)

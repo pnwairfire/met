@@ -338,7 +338,7 @@ class ARLProfile(object):
         # the value to it's left; so, add an extra space before any
         # '-' and then split on space
         new_line = self.NEGATIVE_NUMBER_MATCHER.sub('\\1 -', line)
-        return self.MISSING_VALUE_MATCHER.sub('  0.0 ', new_line).split()
+        return self.MISSING_VALUE_MATCHER.sub(' None ', new_line).split()
 
     def parse_hourly_text(self, profile):
         """ Parse raw hourly text into a more useful dictionary """

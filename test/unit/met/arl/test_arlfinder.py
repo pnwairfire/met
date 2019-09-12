@@ -80,23 +80,54 @@ class TestARLFinderSettingAcceptedForecastsFromConfig(object):
         ]
 
 
-class TestARLFinder(object):
+class TestARLFinderCreateDateMatcher(object):
+
     def setup(self):
         self.arl_finder = arlfinder.ArlFinder(tempfile.mkdtemp())
 
-    def test_create_date_matcher(self):
+    def test_no_config(self):
         s = datetime.datetime(2015, 1, 1, 14)
         e = datetime.datetime(2015, 1, 4, 2)
         m = self.arl_finder._create_date_matcher(s,e)
         assert m.pattern == '.*(20141228|20141229|20141230|20141231|20150101|20150102|20150103|20150104)'
 
+    def test_with_custom_max_days_out(self):
         self.arl_finder._max_days_out = 1
+        s = datetime.datetime(2015, 1, 1, 14)
+        e = datetime.datetime(2015, 1, 4, 2)
         m = self.arl_finder._create_date_matcher(s,e)
         assert m.pattern == '.*(20141231|20150101|20150102|20150103|20150104)'
 
         assert arlfinder.ArlFinder.ALL_DATE_MATCHER == self.arl_finder._create_date_matcher(None, e)
         assert arlfinder.ArlFinder.ALL_DATE_MATCHER == self.arl_finder._create_date_matcher(s, None)
         assert arlfinder.ArlFinder.ALL_DATE_MATCHER == self.arl_finder._create_date_matcher(None, None)
+
+    def test_with_accepted_forecasts_all_within_time_window(self):
+        self.arl_finder._accepted_forecasts = [
+            datetime.datetime(2015, 1, 2),
+            datetime.datetime(2015, 1, 2, 12)
+        ]
+        s = datetime.datetime(2015, 1, 1, 14)
+        e = datetime.datetime(2015, 1, 4, 2)
+        m = self.arl_finder._create_date_matcher(s,e)
+        assert m.pattern == '.*(2015010200|2015010212)'
+
+    def test_with_accepted_forecasts_all_within_time_window(self):
+        self.arl_finder._accepted_forecasts = [
+            datetime.datetime(2015, 1, 2),
+            datetime.datetime(2015, 1, 2, 12),
+            datetime.datetime(2015, 1, 5, 12)  # <-- outside of time window
+        ]
+        s = datetime.datetime(2015, 1, 1, 14)
+        e = datetime.datetime(2015, 1, 4, 2)
+        m = self.arl_finder._create_date_matcher(s,e)
+        assert m.pattern == '.*(2015010200|2015010212)'
+
+
+class TestARLFinder(object):
+
+    def setup(self):
+        self.arl_finder = arlfinder.ArlFinder(tempfile.mkdtemp())
 
     # TODO: somehow test _find_index_files, monkeypatching os.walk, etc.
     #   appropriately

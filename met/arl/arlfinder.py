@@ -85,7 +85,9 @@ import os
 import re
 from collections import defaultdict
 
-from afdatetime.parsing import parse_datetimes, parse_utc_offset
+from afdatetime.parsing import (
+    parse_datetimes, parse_utc_offset, parse as parse_dt
+)
 from pyairfire.data import utils as datautils
 from pyairfire.io import CSV2JSON
 
@@ -114,6 +116,8 @@ class ArlFinder(object):
          - ignore_pattern -- path pattern to ignore when looking for arl
             index files; e.g. '/MOVED/'
          - fewer_arl_files -- sacrifice recency of data for fewer numer of files
+         - accepted_forecasts -- whitelist of specific forecasts to consider;
+            e.g. consider only 2019-09-01 00Z forecast for
 
         e.g. fewer_arl_files:
           Suppose there's one arl file with 84 hours starting at
@@ -152,6 +156,9 @@ class ArlFinder(object):
         self._ignore_matcher = (config.get('ignore_pattern')
             and re.compile('.*{}.*'.format(config['ignore_pattern'])))
         self._fewer_arl_files = not not config.get('fewer_arl_files')
+
+        self._accepted_forecasts = self._get_accepted_forecasts(config)
+
 
     def find(self, start, end):
         """finds met data spanning start/end time window
@@ -218,6 +225,23 @@ class ArlFinder(object):
 
         return {'files': files}
 
+
+    ##
+    ## Accepted forecasts
+    ##
+
+    _DATETIME_EXTRA_FORMATS = [
+        '%Y%m%dT%H:%M:%S', '%Y%m%dT%H:%M:%SZ',
+        '%Y%m%dT%H', '%Y%m%dT%HZ', "%Y%m%d%H", "%Y-%m-%d %HZ"
+    ]
+
+    def _get_accepted_forecasts(self, config):
+        if config.get('accepted_forecasts'):
+            return sorted([parse_dt(i, extra_formats=_DATETIME_EXTRA_FORMATS)
+                for i in config['accepted_forecasts']])
+        # else, returns None
+
+
     ##
     ## Finding Index Files
     ##
@@ -226,7 +250,7 @@ class ArlFinder(object):
     ALL_DATE_MATCHER = re.compile('.*(\d{10})')
 
     def _create_date_matcher(self, start, end):
-        """Returns a compiled regex object that matches %Y%m%d date strings
+        """Returns a compiled regex object that matches %Y%m%d[%H] date strings
         for all dates between start and end, plus N days prior.  If neither
         start nor end is specified, all dates will be matched
 
@@ -237,11 +261,25 @@ class ArlFinder(object):
         """
         # By this point start and end will either both be defined or not
         if start and end:
-            num_days = (end.date()-start.date()).days
-            dates_to_match = [start + ONE_DAY*i
-                for i in range(-self._max_days_out, num_days+1)]
+
+            if self._accepted_forecasts:
+                # going off of whitelist of specific forecasts, so include
+                # initialization hour in each datetime string
+                date_strs = [d.strftime('%Y%m%d%H')
+                    for d in self._accepted_forecasts
+                    if start <= d and d <= end]
+
+            else:
+                num_days = (end.date()-start.date()).days
+                dates_to_match = [start + ONE_DAY*i
+                    for i in range(-self._max_days_out, num_days+1)]
+
+                # going off of date range, so just check date portion,
+                # ignoring hour portion of datetime string
+                date_strs = [d.strftime('%Y%m%d') for d in dates_to_match]
+
             date_matcher = re.compile(".*({})".format(
-                '|'.join([dt.strftime('%Y%m%d') for dt in dates_to_match])))
+                '|'.join(date_strs)))
 
         else:
             date_matcher = self.ALL_DATE_MATCHER

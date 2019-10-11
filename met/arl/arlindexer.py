@@ -187,7 +187,7 @@ class ArlIndexer(ArlFinder):
         index_data = datautils.format_datetimes(index_data)
         if (not self._config.get('mongodb_url')
                 and not self._config.get('output_file')):
-            sys.stdout.write(json.dumps(index_data))
+            sys.stdout.write(json.dumps(index_data, indent=self._config.get('indent')))
         else:
             succeeded = False
 
@@ -221,7 +221,7 @@ class ArlIndexer(ArlFinder):
 
     def _write_to_output_file(self, index_data):
         with open(self._config['output_file'], 'w') as f:
-            f.write(json.dumps(index_data))
+            f.write(json.dumps(index_data, indent=self._config.get('indent')))
 
 
 class ArlIndexDB(object):

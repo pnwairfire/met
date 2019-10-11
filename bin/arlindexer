@@ -81,6 +81,11 @@ OPTIONAL_ARGS = [
     {
         'long': '--mongo-ssl-ca-certs',
         'help': "can be specified instead of --mongo-ssl-certfile and --mongo-ssl-keyfile"
+    },
+    {
+        'long': "--indent",
+        "help": "json indentation, if writing to stdout or to file",
+        "type": int
     }
 ]
 

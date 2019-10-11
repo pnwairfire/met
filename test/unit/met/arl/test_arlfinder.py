@@ -133,6 +133,21 @@ class TestARLFinderCreateDateMatcher(object):
             self.arl_finder._create_date_matcher(s,e)
         assert e_info.value.args[0] == self.arl_finder.ACCEPTED_FORECASTS_OUTSIDE_TIME_WINDOW_ERROR_MSG
 
+    # Note: test cases with start defined but not end, and vice versa, are
+    #   not included because _create_date_matcher will always have either
+    #   both start and end define or neither
+
+    def test_no_start_or_end_with_accepted_forecasts(self):
+        self.arl_finder._accepted_forecasts = [
+            datetime.datetime(2015, 1, 2),
+            datetime.datetime(2015, 1, 2, 12)
+        ]
+        m = self.arl_finder._create_date_matcher(None, None)
+        assert m.pattern == '.*(2015010200|2015010212)'
+
+    def test_no_start_or_end_and_no_accepted_forecasts(self):
+        m = self.arl_finder._create_date_matcher(None, None)
+        assert m.pattern == '.*(\d{10})'
 
 class TestARLFinderParseIndexFiles(object):
     """Unit test for _parse_index_files and _parse_index_file"""

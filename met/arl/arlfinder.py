@@ -269,9 +269,11 @@ class ArlFinder(object):
         'max_days_out' config setting.
         """
         # By this point start and end will either both be defined or not
+        # It is guaranteed if ArlFinder.find was called, but not if
+        # ArlIndexer.index was called
         if self._accepted_forecasts:
             forecasts = [d for d in self._accepted_forecasts
-                if start <= d and d <= end]
+                if (not start or start <= d) and (not end or d <= end)]
             if not forecasts:
                 raise ValueError(self.ACCEPTED_FORECASTS_OUTSIDE_TIME_WINDOW_ERROR_MSG)
             # going off of whitelist of specific forecasts, so include
@@ -280,13 +282,16 @@ class ArlFinder(object):
 
 
         else:
-            num_days = (end.date()-start.date()).days
-            dates_to_match = [start + ONE_DAY*i
-                for i in range(-self._max_days_out, num_days+1)]
+            if start and end:
+                num_days = (end.date()-start.date()).days
+                dates_to_match = [start + ONE_DAY*i
+                    for i in range(-self._max_days_out, num_days+1)]
 
-            # going off of date range, so just check date portion,
-            # ignoring hour portion of datetime string
-            date_strs = [d.strftime('%Y%m%d') for d in dates_to_match]
+                # going off of date range, so just check date portion,
+                # ignoring hour portion of datetime string
+                date_strs = [d.strftime('%Y%m%d') for d in dates_to_match]
+            else:
+                date_strs = ["\d{10}"]
 
         date_matcher = re.compile(".*({})".format(
             '|'.join(date_strs)))

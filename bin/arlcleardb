@@ -1,0 +1,63 @@
+#! /usr/bin/env python
+
+__author__ = "Joel Dubowy"
+__copyright__ = "Copyright 2016, AirFire, PNW, USFS"
+
+import logging
+import sys
+import traceback
+
+from afscripting import args as scripting_args
+from afscripting.utils import exit_with_msg
+
+try:
+
+    from met.arl import arlindexer
+except:
+    import os
+    import sys
+    root_dir = os.path.abspath(os.path.join(sys.path[0], '../'))
+    sys.path.insert(0, root_dir)
+    from met.arl import arlindexer
+
+REQUIRED_ARGS = [
+    {
+        'short': '-m',
+        'long': '--mongodb-url',
+        'help': "mongodb url: format 'mongodb://[username:password@]host[:port][/[database][?options]]'"
+    }
+]
+
+OPTIONAL_ARGS = [
+    {
+        'long': '--mongo-ssl-certfile',
+        'help': "ssl cert file; if specified, --mongo-ssl-keyfile must be specified too"
+    },
+    {
+        'long': '--mongo-ssl-keyfile',
+        'help': "ssl key file; if specified, --mongo-ssl-certfile must be specified too"
+    },
+    {
+        'long': '--mongo-ssl-ca-certs',
+        'help': "can be specified instead of --mongo-ssl-certfile and --mongo-ssl-keyfile"
+    }
+]
+
+EXAMPLES_STR = """This script clears the data in the arl index.
+
+Examples:
+  $ {script_name} -m mongodb://localhost:27017/arlindex
+ """.format(script_name=sys.argv[0])
+
+if __name__ == "__main__":
+    parser, args = scripting_args.parse_args(REQUIRED_ARGS, OPTIONAL_ARGS,
+        epilog=EXAMPLES_STR)
+
+    try:
+        arlindexer.MetFilesCollection(**args.__dict__).clear()
+        arlindexer.MetDatesCollection(**args.__dict__).clear()
+
+    except Exception as e:
+        logging.error(e)
+        logging.debug(traceback.format_exc())
+        exit_with_msg(e)

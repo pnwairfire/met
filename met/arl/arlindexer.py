@@ -346,6 +346,9 @@ class MetFilesCollection(ArlIndexDB):
         r = self.met_files.find(filter=query)
         return [e.pop('_id') and e for e in r]
 
+    def clear(self):
+        self.met_files.remove({})
+
 class MetDatesCollection(ArlIndexDB):
 
     INDEXED_FIELDS = ['domain']
@@ -410,3 +413,5 @@ class MetDatesCollection(ArlIndexDB):
         r = self.dates.find(filter=query)
         return [e.pop('_id') and e for e in r]
 
+    def clear(self):
+        self.dates.remove({})

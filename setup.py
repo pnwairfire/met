@@ -17,6 +17,7 @@ setup(
         'bin/arlfinder',
         'bin/arlindexer',
         'bin/arlprofiler',
+        'bin/arlbulkprofiler',
         'bin/arlquery',
         'bin/arlcleardb'
     ],

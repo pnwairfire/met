@@ -18,7 +18,7 @@ setup(
         'bin/arlindexer',
         'bin/arlprofiler',
         'bin/arlquery',
-        'bin/arcleardb'
+        'bin/arlcleardb'
     ],
     classifiers=[
         "Development Status :: 3 - Alpha",

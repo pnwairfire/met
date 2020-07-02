@@ -106,6 +106,10 @@ OPTIONAL_ARGS = [
     {
         'long': '--index-filename-pattern',
         'help': "index filename pattern; default 'arl12hrindex.csv'"
+    },
+    {
+        'long': '--output-file',
+        'help': "write to file instead of stdout"
     }
 ]
 
@@ -133,7 +137,14 @@ if __name__ == "__main__":
             profile_exe=args.profile_exe, time_step=args.time_step)
         arl_profile = profiler.profile(args.lat, args.lng, args.start,
             args.end, args.utc_offset)
-        sys.stdout.write(json.dumps(arl_profile))
+
+        output_data = json.dumps(arl_profile)
+        if args.output_file:
+            with open(args.output_file, 'w') as f:
+                f.write(output_data)
+        else:
+            sys.stdout.write(output_data)
+
     except Exception as e:
         logging.error(e)
         logging.debug(traceback.format_exc())

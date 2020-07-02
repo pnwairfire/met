@@ -424,7 +424,7 @@ class ARLProfileBase(object):
             logging.debug("Loading {}".format(dt.isoformat()))
             if dt not in self.hourly_profile:
                 raise ValueError("{} not in arl file {}".format(dt.isoformat(),
-                    full_path_profile_txt))
+                    self.raw_file))
 
             local_hourly_profile[dt + timedelta(hours=self.utc_offset)] = self.hourly_profile[dt]
             dt += ONE_HOUR

@@ -13,6 +13,7 @@ TODO: move this to pyairfire or into it's own repo (arl-profile[r]) ?
 __author__ = "Joel Dubowy and others (unknown)"
 __copyright__ = "Copyright 2016, AirFire, PNW, USFS"
 
+import abc
 import logging
 import os
 import re
@@ -35,7 +36,10 @@ ONE_HOUR = timedelta(hours=1)
 ## Base Classes
 ##
 
-class ArlProfilerBase(object):
+class ArlProfilerBase(abc.ABC):
+    # TODO: is there a way to tell 'profile' to write profile.txt and MESSAGE
+    #  to an alternate dir (e.g. to a /tmp/ dir)
+    PROFILE_OUTPUT_FILE = 'profile.txt'
 
     def __init__(self, met_files, profile_exe=None, time_step=None):
         """Constructor
@@ -77,6 +81,10 @@ class ArlProfilerBase(object):
 
         self._time_step = time_step or 1
 
+    ##
+    ## Instantiation
+    ##
+
     def _parse_met_files(self, met_files):
         logging.debug("Parsing met file specifications")
         if not met_files:
@@ -107,6 +115,107 @@ class ArlProfilerBase(object):
             _met_files.append(_met_file)
         return _met_files
 
+    ##
+    ## Profiling
+    ##
+
+    def profile(self, local_start, local_end, utc_offset, *location_args):
+        """Returns local met profile for specific location and timewindow
+
+        args:
+         - lat -- latitude of location
+         - lng -- longitude of location
+         - local_start -- local datetime object representing beginning of time window
+         - local_end -- local datetime object representing end of time window
+         - utc_offset -- hours ahead of or behind UTC
+        """
+        self._set_location_info(*location_args)
+
+        utc_start_hour, utc_end_hour = self._get_utc_start_and_end_hours(
+            local_start, local_end, utc_offset)
+
+        local_met_data = {}
+        for met_file in self._met_files:
+            if (met_file['first_hour'] > utc_end_hour or
+                    met_file['last_hour'] < utc_start_hour):
+                # met file has no data within given timewindow
+                continue
+
+            start = max(met_file['first_hour'], utc_start_hour)
+            end = min(met_file['last_hour'], utc_end_hour)
+
+            met_dir, met_file_name = os.path.split(met_file["file"])
+            # split returns dir without trailing slash, which is required by profile
+            met_dir = met_dir + '/'
+
+            with osutils.create_working_dir() as wdir:
+              output_filename = os.path.join(wdir, self.PROFILE_OUTPUT_FILE)
+              cmd = self._get_command(met_dir, met_file_name, wdir, output_filename)
+              self._call(wdir, output_filename, met_dir, met_file_name, lat, lng)
+              lmd = self._load(output_filename, met_file['first_hour'],
+                  start, end, utc_offset, lat, lng)
+            local_met_data.update(lmd)
+        return local_met_data
+
+
+    def _get_utc_start_and_end_hours(self, local_start, local_end, utc_offset):
+        # TODO: validate utc_offset?
+        if local_start > local_end:
+            raise ValueError("Invalid localmet time window: start={}, end={}".format(
+              local_start, local_end))
+
+        utc_start = local_start - timedelta(hours=utc_offset)
+        utc_start_hour = datetime(utc_start.year, utc_start.month,
+            utc_start.day, utc_start.hour)
+        utc_end = local_end - timedelta(hours=utc_offset)
+        utc_end_hour = datetime(utc_end.year, utc_end.month, utc_end.day,
+            utc_end.hour)
+        # Don't include end hour if it's on the hour
+        # TODO: should we indeed exclude it?
+        if utc_end == utc_end_hour:
+            utc_end_hour -= ONE_HOUR
+
+        return utc_start_hour, utc_end_hour
+
+    def _call(self, cmd):
+        # TODO: cd into tmp dir before calling, or somehow specify
+        # custom tmp file name for profile.txt
+        # TODO: add another method for calling profile?
+        # Note: there must be no space between each option and it's value
+        # Note: '-w2' indicates wind direction, instead of components
+        logging.debug("Calling '{}'".format(cmd))
+        # Note: if we need the stdout/stderr output, we can use:
+        #  > output = subprocess.check_output(cmd.split(' '),
+        #        stderr=subprocess.STDOUT)
+        # or do something like:
+        #  > output = StringIO.StringIO()
+        #  > status = subprocess.check_output(cmd.split(' '),
+        #        stdout=output, stderr=subprocess.STDOUT)
+        # TODO: if writing to '/dev/null' isn't portable, capture stdout/stderr
+        # in tmp file or in StringIO.StringIO object, and just throw away
+        status = subprocess.call(cmd.split(' '),
+            stdout=open('/dev/null', 'w'), stderr=subprocess.STDOUT)
+        if status:
+            raise RuntimeError("profile failed with exit code {}".format(
+                status))
+
+    ##
+    ## to be implemented by base classes
+    ##
+
+    @abc.abstractmethod
+    def _set_location_info(self, *location_args):
+        pass
+
+    @abc.abstractmethod
+    def _get_command(self, met_dir, met_file_name, wdir, output_filename):
+        pass
+
+    @abc.abstractmethod
+    def _load(self, output_filename, first, start, end, utc_offset):
+        pass
+
+
 class ARLProfileBase(object):
     def __init__(self, filename, first, start, end, utc_offset):
         self.raw_file = filename
@@ -114,7 +223,6 @@ class ARLProfileBase(object):
         self.start = start
         self.end = end
         self.utc_offset = utc_offset
-
 
     def fix_first_hour(self):
         """

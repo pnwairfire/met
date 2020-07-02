@@ -34,90 +34,25 @@ __all__ = [
 ##
 
 class ArlProfiler(ArlProfilerBase):
-    # TODO: is there a way to tell 'profile' to write profile.txt and MESSAGE
-    #  to an alternate dir (e.g. to a /tmp/ dir)
-    PROFILE_OUTPUT_FILE = 'profile.txt'
 
-    def profile(self, lat, lng, local_start, local_end, utc_offset):
-        """Returns local met profile for specific location and timewindow
+    def _set_location_info(self, lat, lng):
+        self._lat = lat
+        self._lng = lng
 
-        args:
-         - lat -- latitude of location
-         - lng -- longitude of location
-         - local_start -- local datetime object representing beginning of time window
-         - local_end -- local datetime object representing end of time window
-         - utc_offset -- hours ahead of or behind UTC
-        """
-        # TODO: validate utc_offset?
-        if local_start > local_end:
-            raise ValueError("Invalid localmet time window: start={}, end={}".format(
-              local_start, local_end))
+    def _get_command(self, met_dir, met_file_name, wdir, output_filename):
+        # Note: wdir and output_filename are ignored;
+        #   they're used by bulk profiler
+        return "{exe} -d{dir} -f{file} -y{lat} -x{lng} -w2 -t{time_step}".format(
+            exe=self._profile_exe, dir=met_dir, file=met_file_name,
+            lat=self._lat, lng=self._lng, time_step=self._time_step)
 
-        utc_start = local_start - timedelta(hours=utc_offset)
-        utc_start_hour = datetime(utc_start.year, utc_start.month,
-            utc_start.day, utc_start.hour)
-        utc_end = local_end - timedelta(hours=utc_offset)
-        utc_end_hour = datetime(utc_end.year, utc_end.month, utc_end.day,
-            utc_end.hour)
-        # Don't include end hour if it's on the hour
-        # TODO: should we indeed exclude it?
-        if utc_end == utc_end_hour:
-            utc_end_hour -= ONE_HOUR
-
-        local_met_data = {}
-        for met_file in self._met_files:
-            if (met_file['first_hour'] > utc_end_hour or
-                    met_file['last_hour'] < utc_start_hour):
-                # met file has no data within given timewindow
-                continue
-
-            start = max(met_file['first_hour'], utc_start_hour)
-            end = min(met_file['last_hour'], utc_end_hour)
-
-            d, f = os.path.split(met_file["file"])
-            # split returns dir without trailing slash, which is required by profile
-            d = d + '/'
-
-            with osutils.create_working_dir() as wdir:
-              self._call(d, f, lat, lng)
-              full_path_profile_txt = os.path.join(wdir, self.PROFILE_OUTPUT_FILE)
-              lmd = self._load(full_path_profile_txt, met_file['first_hour'],
-                  start, end, utc_offset, lat, lng)
-            local_met_data.update(lmd)
-        return local_met_data
-
-    def _call(self, d, f, lat, lng):
-        # TODO: cd into tmp dir before calling, or somehow specify
-        # custom tmp file name for profile.txt
-        # TODO: add another method for calling profile?
-        # Note: there must be no space between each option and it's value
-        # Note: '-w2' indicates wind direction, instead of components
-        cmd = "{exe} -d{dir} -f{file} -y{lat} -x{lng} -w2 -t{time_step}".format(
-            exe=self._profile_exe, dir=d, file=f, lat=lat,
-            lng=lng, time_step=self._time_step)
-        logging.debug("Calling '{}'".format(cmd))
-        # Note: if we need the stdout/stderr output, we can use:
-        #  > output = subprocess.check_output(cmd.split(' '),
-        #        stderr=subprocess.STDOUT)
-        # or do something like:
-        #  > output = StringIO.StringIO()
-        #  > status = subprocess.check_output(cmd.split(' '),
-        #        stdout=output, stderr=subprocess.STDOUT)
-        # TODO: if writing to '/dev/null' isn't portable, capture stdout/stderr
-        # in tmp file or in StringIO.StringIO object, and just throw away
-        status = subprocess.call(cmd.split(' '),
-            stdout=open('/dev/null', 'w'), stderr=subprocess.STDOUT)
-        if status:
-            raise RuntimeError("profile failed with exit code {}".format(
-                status))
-
-    def _load(self, full_path_profile_txt, first, start, end, utc_offset, lat, lng):
+    def _load(self, full_path_profile_txt, first, start, end, utc_offset):
         logging.debug("Loading {}".format(full_path_profile_txt))
         # data = {}
         # with open(full_path_profile_txt, 'w') as f:
         #     for line in f....
         profile = ARLProfile(full_path_profile_txt, first, start, end,
-            utc_offset, lat, lng)
+            utc_offset, self._lat, self._lng)
         local_hourly_profile = profile.get_hourly_params()
 
         # TDOO: manipulate local_hourly_profile[dt] at all (e.g. map keys to

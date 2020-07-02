@@ -128,9 +128,9 @@ if __name__ == "__main__":
         epilog=EXAMPLES_STR)
     try:
         profiler = arlprofiler.ArlProfiler(args.met_files,
-            profile_exe=args.profile_exe)
+            profile_exe=args.profile_exe, time_step=args.time_step)
         arl_profile = profiler.profile(args.lat, args.lng, args.start,
-            args.end, args.utc_offset, time_step=args.time_step)
+            args.end, args.utc_offset)
         sys.stdout.write(json.dumps(arl_profile))
     except Exception as e:
         logging.error(e)

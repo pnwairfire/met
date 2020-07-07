@@ -23,7 +23,11 @@ except:
 class LocationAction(scripting_args.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         d = getattr(namespace, self.dest)
-        d.append(values.split(','))
+        parts = values.split(',')
+        loc = {'latitude':parts[0], 'longitude':parts[1]}
+        if len(parts) > 2:
+            loc['id'] = parts[2]
+        d.append(loc)
 
 class ParseArlFilesAction(scripting_args.Action):
 
@@ -49,6 +53,7 @@ REQUIRED_ARGS = [
     {
         'short': '-f',
         'long': '--met-file',
+        'dest': 'met_files',
         'help': "Met file with it's first hour and the date range to use it"
             " for; format '<file>;<first>;<start>;<end>'; 'first', 'start', "
             "and 'end' are expected to be UTC",
@@ -57,8 +62,8 @@ REQUIRED_ARGS = [
     {
         'short': '-l',
         'long': '--location',
-        'store': 'locations',
-        'help': 'comma separated latitude,longitude',
+        'dest': 'locations',
+        'help': 'comma separated latitude,longitude[,id]',
         'action': LocationAction,
         'default': []
     },
@@ -85,12 +90,12 @@ REQUIRED_ARGS = [
 OPTIONAL_ARGS = [
     {
         'short': '-p',
-        'long': '--bulk-profiler-exe',
+        'long': '--profile-exe',
         'help': 'Bulk profile executable'
     },
     {
         'short': '-t',
-        'long': '--time_step',
+        'long': '--time-step',
         'help': 'Time step',
         'type': int
     },
@@ -123,10 +128,9 @@ if __name__ == "__main__":
         epilog=EXAMPLES_STR)
     try:
         profiler = arlprofiler.ArlBulkProfiler(args.met_files,
-            profile_exe=args.profile_exe)
-        arl_profile = profiler.profile(args.locations, args.start,
-            args.end, args.utc_offset, time_step=args.time_step)
-
+            profile_exe=args.profile_exe, time_step=args.time_step)
+        arl_profile = profiler.profile(args.start,
+            args.end, args.utc_offset, args.locations)
 
         output_data = json.dumps(arl_profile)
         if args.output_file:

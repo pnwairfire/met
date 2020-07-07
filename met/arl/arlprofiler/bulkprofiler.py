@@ -1,5 +1,6 @@
 import csv
 import logging
+import os
 import uuid
 
 from .base import ArlProfilerBase
@@ -28,6 +29,10 @@ class ArlBulkProfiler(ArlProfilerBase):
         for l in self._locations:
             if not l.get('id'):
                 l['id'] = uuid.uuid4()
+            if not l.get('latitude') and l.get('lat'):
+                l['latitude'] = l['lat']
+            if not l.get('longitude') and l.get('lng'):
+                l['longitude'] = l['lng']
 
     def _get_command(self, met_dir, met_file_name, wdir, output_file_name):
         input_file_name = self._write_input_file(wdir)
@@ -54,11 +59,11 @@ class ArlBulkProfiler(ArlProfilerBase):
             csv_writer.writeheader()
 
             for l in self._locations:
-                if not l.get('lat') or not l.get('lng'):
-                    logging.warn("locations missing lat, or lng")
+                if not l.get('latitude') or not l.get('longitude'):
+                    logging.warn("location missing latitude or longitude")
                     # TODO: fail?
                 else:
-                    csv.write(l)
+                    csv_writer.writerow(l)
         return filename
 
     def _load(self, full_path_profile_txt, first, start, end, utc_offset):

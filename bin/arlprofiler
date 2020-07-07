@@ -52,17 +52,13 @@ REQUIRED_ARGS = [
     {
         'short': '-l',
         'long': '--lat',
-        'dest': 'lat',
         'help': 'latitude',
-        'action': 'store',
         'type': float
     },
     {
         'short': '-g',
         'long': '--lng',
-        'dest': 'lng',
         'help': 'longitude',
-        'action': 'store',
         'type': float
     },
     {
@@ -80,9 +76,7 @@ REQUIRED_ARGS = [
     {
         'short': '-o',
         'long': '--utc-offset',
-        'dest': 'utc_offset',
         'help': 'utc offset at lat/lng',
-        'action': 'store',
         'type': float
     }
 ]
@@ -91,16 +85,12 @@ OPTIONAL_ARGS = [
     {
         'short': '-p',
         'long': '--profile-exe',
-        'dest': 'profile_exe',
-        'help': 'Profile executable',
-        'action': 'store'
+        'help': 'Profile executable'
     },
     {
         'short': '-t',
-        'long': '--time_step',
-        'dest': 'time_step',
+        'long': '--time-step',
         'help': 'Time step',
-        'action': 'store',
         'type': int
     },
     {

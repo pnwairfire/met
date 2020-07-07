@@ -151,9 +151,9 @@ class ArlProfilerBase(abc.ABC):
             with osutils.create_working_dir() as wdir:
               output_filename = os.path.join(wdir, self.PROFILE_OUTPUT_FILE)
               cmd = self._get_command(met_dir, met_file_name, wdir, output_filename)
-              self._call(wdir, output_filename, met_dir, met_file_name, lat, lng)
+              self._call(cmd)
               lmd = self._load(output_filename, met_file['first_hour'],
-                  start, end, utc_offset, lat, lng)
+                  start, end, utc_offset)
             local_met_data.update(lmd)
         return local_met_data
 

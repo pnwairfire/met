@@ -135,8 +135,8 @@ if __name__ == "__main__":
     try:
         profiler = arlprofiler.ArlProfiler(args.met_files,
             profile_exe=args.profile_exe, time_step=args.time_step)
-        arl_profile = profiler.profile(args.lat, args.lng, args.start,
-            args.end, args.utc_offset)
+        arl_profile = profiler.profile(args.start,
+            args.end, args.utc_offset, args.lat, args.lng)
 
         output_data = json.dumps(arl_profile)
         if args.output_file:

@@ -44,6 +44,10 @@ class ArlBulkProfiler(ArlProfilerBase):
             time_step=self._time_step, input=input_file_name,
             output=output_file_name)
 
+    @property
+    def default_profile_exe(self):
+        return 'bulk_profiler_csv'
+
     def _write_input_file(self, wdir):
         """Writes locations file with the following format:
         id,latitude,longitude
@@ -66,5 +70,3 @@ class ArlBulkProfiler(ArlProfilerBase):
                     csv_writer.writerow(l)
         return filename
 
-    def _load(self, full_path_profile_txt, first, start, end, utc_offset):
-        pass

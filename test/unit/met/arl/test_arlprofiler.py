@@ -19,7 +19,7 @@ from data import (
 )
 
 ##
-## Tests for ARLProfile
+## Tests for ArlProfile
 ##
 
 data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
@@ -37,7 +37,7 @@ PROFILE_WITH_ASTERISKS_FILENAME = os.path.join(data_dir, 'profile-nam12km-with-a
 #     def sunset_hr(self, *args, **kwargs):
 #         return 18
 
-class BaseTestARLProfile(object):
+class BaseTestArlProfile(object):
 
     def check_hourly_profiles(self, actual, expected):
         def check_vals(k, a, e):
@@ -70,11 +70,11 @@ class BaseTestARLProfile(object):
     #     assert [] == ...
 
 
-class TestARLProfileOne(BaseTestARLProfile):
+class TestArlProfileOne(BaseTestArlProfile):
 
     def test_all_hours_with_offset(self, monkeypatch):
         self.monkeypatch_sun(monkeypatch)
-        profiler = arlprofiler.ARLProfile(PROFILE_ONE_FILENAME,
+        profiler = arlprofiler.ArlProfile(PROFILE_ONE_FILENAME,
             datetime.datetime(2014, 5, 30, 0, 0), # first
             datetime.datetime(2014, 5, 30, 0, 0), # start
             datetime.datetime(2014, 5, 30, 2, 0), # end
@@ -87,7 +87,7 @@ class TestARLProfileOne(BaseTestARLProfile):
 
     def test_all_hours_no_offset(self, monkeypatch):
         self.monkeypatch_sun(monkeypatch)
-        profiler = arlprofiler.ARLProfile(PROFILE_ONE_FILENAME,
+        profiler = arlprofiler.ArlProfile(PROFILE_ONE_FILENAME,
             datetime.datetime(2014, 5, 30, 0, 0), # first
             datetime.datetime(2014, 5, 30, 0, 0), # start
             datetime.datetime(2014, 5, 30, 2, 0), # end
@@ -100,7 +100,7 @@ class TestARLProfileOne(BaseTestARLProfile):
 
     def test_partial_with_offset(self, monkeypatch):
         self.monkeypatch_sun(monkeypatch)
-        profiler = arlprofiler.ARLProfile(PROFILE_ONE_FILENAME,
+        profiler = arlprofiler.ArlProfile(PROFILE_ONE_FILENAME,
             datetime.datetime(2014, 5, 30, 0, 0), # first
             datetime.datetime(2014, 5, 30, 1, 0), # start
             datetime.datetime(2014, 5, 30, 1, 0), # end
@@ -113,7 +113,7 @@ class TestARLProfileOne(BaseTestARLProfile):
 
     def test_partial_no_offset(self, monkeypatch):
         self.monkeypatch_sun(monkeypatch)
-        profiler = arlprofiler.ARLProfile(PROFILE_ONE_FILENAME,
+        profiler = arlprofiler.ArlProfile(PROFILE_ONE_FILENAME,
             datetime.datetime(2014, 5, 30, 0, 0), # first
             datetime.datetime(2014, 5, 30, 1, 0), # start
             datetime.datetime(2014, 5, 30, 1, 0), # end
@@ -125,11 +125,11 @@ class TestARLProfileOne(BaseTestARLProfile):
             expected_profile_one.HOURLY_PROFILES_PARTIAL_NO_OFFSET)
 
 
-class TestARLProfileNam12kmWithAsterisks(BaseTestARLProfile):
+class TestArlProfileNam12kmWithAsterisks(BaseTestArlProfile):
 
     def test_four_hours_with_offset(self, monkeypatch):
         self.monkeypatch_sun(monkeypatch)
-        profiler = arlprofiler.ARLProfile(PROFILE_WITH_ASTERISKS_FILENAME,
+        profiler = arlprofiler.ArlProfile(PROFILE_WITH_ASTERISKS_FILENAME,
             datetime.datetime(2015, 8, 9, 0, 0), # first
             datetime.datetime(2015, 8, 9, 0, 0), # start
             datetime.datetime(2015, 8, 9, 3, 0), # end
@@ -142,7 +142,7 @@ class TestARLProfileNam12kmWithAsterisks(BaseTestARLProfile):
 
     def test_four_hours_no_offset(self, monkeypatch):
         self.monkeypatch_sun(monkeypatch)
-        profiler = arlprofiler.ARLProfile(PROFILE_WITH_ASTERISKS_FILENAME,
+        profiler = arlprofiler.ArlProfile(PROFILE_WITH_ASTERISKS_FILENAME,
             datetime.datetime(2015, 8, 9, 0, 0), # first
             datetime.datetime(2015, 8, 9, 0, 0), # start
             datetime.datetime(2015, 8, 9, 3, 0), # end
@@ -155,7 +155,7 @@ class TestARLProfileNam12kmWithAsterisks(BaseTestARLProfile):
 
     def test_partial_with_offset(self, monkeypatch):
         self.monkeypatch_sun(monkeypatch)
-        profiler = arlprofiler.ARLProfile(PROFILE_WITH_ASTERISKS_FILENAME,
+        profiler = arlprofiler.ArlProfile(PROFILE_WITH_ASTERISKS_FILENAME,
             datetime.datetime(2015, 8, 9, 0, 0), # first
             datetime.datetime(2015, 8, 9, 0, 0), # start
             datetime.datetime(2015, 8, 9, 0, 0), # end
@@ -168,7 +168,7 @@ class TestARLProfileNam12kmWithAsterisks(BaseTestARLProfile):
 
     def test_partial_no_offset(self, monkeypatch):
         self.monkeypatch_sun(monkeypatch)
-        profiler = arlprofiler.ARLProfile(PROFILE_WITH_ASTERISKS_FILENAME,
+        profiler = arlprofiler.ArlProfile(PROFILE_WITH_ASTERISKS_FILENAME,
             datetime.datetime(2015, 8, 9, 0, 0), # first
             datetime.datetime(2015, 8, 9, 0, 0), # start
             datetime.datetime(2015, 8, 9, 0, 0), # end

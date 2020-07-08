@@ -218,7 +218,8 @@ class ArlProfileBase(object):
         next_separator =  "------next------"
 
         location_hour_first_line = "Profile Time:"
-        location_hour_second_line = "Profile:"
+        location_hour_second_line = "Profile Location:"
+        bulk_location_hour_second_line = "Profile:"
 
         # read raw text into a dictionary
         profile = []
@@ -232,8 +233,12 @@ class ArlProfileBase(object):
                     ))
 
                 elif location_hour_second_line in line:
-                    profile[-1].update(
-                        location_idx=self._parse_location_idx(line))
+                    profile[-1].update(location_idx=0)
+                    profile[-1].update(self._parse_lat_lng(line))
+
+                elif bulk_location_hour_second_line in line:
+                    profile[-1].update(location_idx=self._parse_location_idx(line))
+                    profile[-1].update(self._parse_lat_lng(line))
 
                 elif hour_separator in line or next_separator in line:
                     continue
@@ -267,6 +272,13 @@ class ArlProfileBase(object):
 
     def _parse_location_idx(self, line):
         return int(s.split()[1])-1
+
+    def _parse_lat_lng(self, line):
+        parts = s.split()
+        return {
+            'lat': int(parts[-3]),
+            'lng': int(parts[-2])
+        }
 
     def parse_hourly_text(self, profile):
         """ Parse raw hourly text into a more useful dictionary """
@@ -312,6 +324,9 @@ class ArlProfileBase(object):
         new_line = self.NEGATIVE_NUMBER_MATCHER.sub('\\1 -', line)
         return self.MISSING_VALUE_MATCHER.sub(' None ', new_line).split()
 
+    FIRST_HOUR_KEYS_TO_FIX = [
+        'pressure_at_surface', 'TPP3', 'T02M', 'RH2M', 'U10M', 'V10M', 'PRSS'
+    ]
     def fix_first_hour(self):
         """
         Some ARL file keep a special place for at-surface met variables. However, sometimes these variables are not
@@ -330,10 +345,8 @@ class ArlProfileBase(object):
         for loc in self.hourly_profile[self.first].values():
             if (self.to_float(loc["PRSS"][0]) == 0.0
                     and self.to_float(loc["T02M"][0]) == 0.0):
-                keys = [
-                    'pressure_at_surface', 'TPP3', 'T02M', 'RH2M', 'U10M', 'V10M', 'PRSS'
-                ]
-                loc.update(dict((k, self.hourly_profile[second_hr][loc['idx']][k]) for k in keys))
+                loc.update(dict((k, self.hourly_profile[second_hr][loc['idx']][k])
+                    for k in self.FIRST_HOUR_KEYS_TO_FIX))
 
     def remove_below_ground_levels(self):
         """
@@ -341,29 +354,31 @@ class ArlProfileBase(object):
         pressure levels that are below the surface of the Earth.
         This data is all nonsense, so it needs to be removed.
         """
-        for dt, param_dict in list(self.hourly_profile.items()):
-            surface_p = self.to_float(param_dict['pressure_at_surface'][0])
-            if surface_p > self.to_float(param_dict['pressure'][0]) or surface_p < self.to_float(param_dict['pressure'][-1]):
-                continue
-            new_dict = {}
-            for i in range(len(param_dict['pressure'])):
-                if self.to_float(param_dict['pressure'][i]) < surface_p:
-                    surface_index = i
-                    break
-            for k in list(param_dict.keys()):
-                # loop through each array, and append to new one
-                if len(param_dict[k]) > 1:
-                    new_array = []
-                    for j in range(len(param_dict[k])):
-                        if j >= surface_index:
-                            new_array.append(self.to_float(param_dict[k][j]))
-                    new_dict[k] = new_array
-                elif len(param_dict[k]) == 1:
-                    new_dict[k] = param_dict[k]
+        for dt in self.hourly_profile:
+            for idx, param_dict in self.hourly_profile[dt].items():
 
-            # replace old dict with new
-            del self.hourly_profile[dt]
-            self.hourly_profile[dt] = new_dict
+                surface_p = self.to_float(param_dict['pressure_at_surface'][0])
+                if surface_p > self.to_float(param_dict['pressure'][0]) or surface_p < self.to_float(param_dict['pressure'][-1]):
+                    continue
+                new_dict = {}
+                for i in range(len(param_dict['pressure'])):
+                    if self.to_float(param_dict['pressure'][i]) < surface_p:
+                        surface_index = i
+                        break
+                for k in list(param_dict.keys()):
+                    # loop through each array, and append to new one
+                    if len(param_dict[k]) > 1:
+                        new_array = []
+                        for j in range(len(param_dict[k])):
+                            if j >= surface_index:
+                                new_array.append(self.to_float(param_dict[k][j]))
+                        new_dict[k] = new_array
+                    elif len(param_dict[k]) == 1:
+                        new_dict[k] = param_dict[k]
+
+                # replace old dict with new
+                del self.hourly_profile[dt][idx]
+                self.hourly_profile[dt][idx] = new_dict
 
     def spread_hourly_results(self):
         """
@@ -390,14 +405,15 @@ class ArlProfileBase(object):
         # (which returns true if integer); can assume that, if string and not int,
         # then it's a float (?)
 
-        for dt, hp in list(self.hourly_profile.items()):
-            for k in hp:
-                if hasattr(hp[k], 'append'):
-                    for i in range(len(hp[k])):
-                        if hasattr(hp[k][i], 'strip'):
-                            hp[k][i] = self.to_float(hp[k][i])
-                elif hasattr(hp[k], 'strip'):
-                    hp[k] = self.to_float(hp[k])
+        for hp in self.hourly_profile.values():
+            for lp in hp.values():
+                for k in lp:
+                    if hasattr(lp[k], 'append'):
+                        for i in range(len(lp[k])):
+                            if hasattr(lp[k][i], 'strip'):
+                                lp[k][i] = self.to_float(lp[k][i])
+                    elif hasattr(lp[k], 'strip'):
+                        lp[k] = self.to_float(lp[k])
 
     def to_float(self, val):
         if val != 'None' and val is not None:
@@ -418,44 +434,45 @@ class ArlProfileBase(object):
         d = self.first.date()
 
         for dt, hp in list(self.hourly_profile.items()):
-            sunrise, sunset, default_pbl = get_sun_and_planet_into(
-                # TODO: lat and long from houlrly profile
-            )
             hr = (dt - self.first).total_seconds() / 3600.0
-            hp['lat'] = self.lat
-            hp['lng'] = self.lng
-            for k in ['pressure', 'TPOT', 'WSPD', 'WDIR', 'WWND', 'TEMP', 'SPHU']:
-                hp[k] = hp.get(k)
-            if not hp.get('HGTS'):
-                hp['HGTS'] = self.calc_height(hp['pressure'])
-            if not hp.get('RELH'):
-                hp['RELH'] = self.calc_rh(hp['pressure'], hp['SPHU'], hp['TEMP'])
-            hp['dew_point'] = self.calc_dew_point(hp['RELH'], hp['TEMP'])
-            hp['sunrise_hour'] = sunrise
-            hp['sunset_hour'] = sunset
-            # Note: Based on what they stand for and on looking at the SEV
-            #  plumerise logic, it appears that 'PBLH' and 'HPBL' are aliases
-            #  for one anohther. ('Planetary Boundary Layer Height' vs 'Height
-            #  of Planetary Boundary Layer'.) If so, I don't see why the two
-            #  values aren't consolidated into a single variable here, as opposed
-            #  to storing them as separate values and only defaulting 'HPBL' to
-            #  `default_pbl(hr, sunrise, sunset)` (which is the current logic
-            #  that was taken from BSF).  The logic could be replace with
-            #  something like:
-            #    _pblh = self.list_to_scalar(hp, pblh, lambda: None)
-            #    _hpbl = self.list_to_scalar(hp, hpbl, lambda: None)
-            #    if _pblh is not None:
-            #        hp['pblh'] = _pblh
-            #    elif _hpbl is not None:
-            #        hp['pblh'] = _pblh
-            #    else:
-            #        hp['pblh'] = default_pbl(hr, sunrise, sunset)
-            for k in ['TO2M', 'RH2M', 'TPP3', 'TPP6', 'PBLH',
-                    'T02M', 'U10M', 'V10M', 'PRSS', 'SHGT', 'TPPA',
-                    'pressure_at_surface',]:
-                self.list_to_scalar(hp, k, lambda: None)
-            self.list_to_scalar(hp, 'HPBL',
-                lambda: default_pbl(hr, sunrise, sunset))
+            for lp in hp.values():
+                sunrise, sunset, default_pbl = get_sun_and_planet_into(
+                    lp['lat'], lng['lng'])
+
+                lp['lat'] = self.lat
+                lp['lng'] = self.lng
+                for k in ['pressure', 'TPOT', 'WSPD', 'WDIR', 'WWND', 'TEMP', 'SPHU']:
+                    lp[k] = lp.get(k)
+                if not lp.get('HGTS'):
+                    lp['HGTS'] = self.calc_height(lp['pressure'])
+                if not lp.get('RELH'):
+                    lp['RELH'] = self.calc_rh(lp['pressure'], lp['SPHU'], lp['TEMP'])
+                lp['dew_point'] = self.calc_dew_point(lp['RELH'], lp['TEMP'])
+                lp['sunrise_hour'] = sunrise
+                lp['sunset_hour'] = sunset
+                # Note: Based on what they stand for and on looking at the SEV
+                #  plumerise logic, it appears that 'PBLH' and 'HPBL' are aliases
+                #  for one anohther. ('Planetary Boundary Layer Height' vs 'Height
+                #  of Planetary Boundary Layer'.) If so, I don't see why the two
+                #  values aren't consolidated into a single variable here, as opposed
+                #  to storing them as separate values and only defaulting 'HPBL' to
+                #  `default_pbl(hr, sunrise, sunset)` (which is the current logic
+                #  that was taken from BSF).  The logic could be replace with
+                #  something like:
+                #    _pblh = self.list_to_scalar(lp, pblh, lambda: None)
+                #    _hpbl = self.list_to_scalar(lp, hpbl, lambda: None)
+                #    if _pblh is not None:
+                #        lp['pblh'] = _pblh
+                #    elif _hpbl is not None:
+                #        lp['pblh'] = _pblh
+                #    else:
+                #        lp['pblh'] = default_pbl(hr, sunrise, sunset)
+                for k in ['TO2M', 'RH2M', 'TPP3', 'TPP6', 'PBLH',
+                        'T02M', 'U10M', 'V10M', 'PRSS', 'SHGT', 'TPPA',
+                        'pressure_at_surface',]:
+                    self.list_to_scalar(lp, k, lambda: None)
+                self.list_to_scalar(lp, 'HPBL',
+                    lambda: default_pbl(hr, sunrise, sunset))
 
     def list_to_scalar(self, hourly_profile, k, default):
         a = hourly_profile.get(k)

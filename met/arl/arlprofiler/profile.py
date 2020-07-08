@@ -197,14 +197,16 @@ from math import exp, log, pow
 from pyairfire import osutils, sun
 from afdatetime.parsing import parse_datetimes
 
-class ArlProfileBase(object):
+ONE_HOUR = timedelta(hours=1)
+
+class ArlProfile(object):
     def __init__(self, filename, first, start, end, utc_offset):
         self.raw_file = filename
         self.first = first
         self.start = start
         self.end = end
         self.utc_offset = utc_offset
-        self.hourly_profile = defaultdict(lambda k: {})
+        self.hourly_profile = defaultdict(lambda: {})
 
     def get_hourly_params(self):
         """ Read a raw profile.txt into an hourly dictionary of parameters """
@@ -233,11 +235,11 @@ class ArlProfileBase(object):
                     ))
 
                 elif location_hour_second_line in line:
-                    profile[-1].update(location_idx=0)
+                    profile[-1].update(idx=0)
                     profile[-1].update(self._parse_lat_lng(line))
 
-                elif bulk_location_hour_second_line in line:
-                    profile[-1].update(location_idx=self._parse_location_idx(line))
+                elif line.lstrip().startswith(bulk_location_hour_second_line):
+                    profile[-1].update(self._parse_location_idx(line))
                     profile[-1].update(self._parse_lat_lng(line))
 
                 elif hour_separator in line or next_separator in line:
@@ -271,13 +273,31 @@ class ArlProfileBase(object):
         return datetime(year, int(date[1]), int(date[2]), int(date[3]))
 
     def _parse_location_idx(self, line):
-        return int(s.split()[1])-1
+        # From Rober re. fires that are outside grid:
+        #
+        # it doesn't die when the location is off the grid....what it does is
+        # in the line that starts each profile, like:
+        #
+        #  Profile:       1   41.4280 -121.1127  (154,495)
+        #
+        # it will look like this instead:
+        #
+        #  Profile:      -2   41.4554 -107.1011  (736,546)
+        #
+        # where the number is negative (and all the values are bs)...i might
+        # be trying to pull data from outside the array so that is likely a
+        # bad idea but it does flag them in a round-about-way.
+        val = int(line.split()[1])
+        return {
+            'idx': abs(val) - 1,
+            'in_bounds': val >= 0
+        }
 
     def _parse_lat_lng(self, line):
-        parts = s.split()
+        parts = line.split()
         return {
-            'lat': int(parts[-3]),
-            'lng': int(parts[-2])
+            'lat': float(parts[-3]),
+            'lng': float(parts[-2])
         }
 
     def parse_hourly_text(self, profile):
@@ -305,7 +325,7 @@ class ArlProfileBase(object):
                 main_vars.append(var_str)
             for v in main_vars:
                 vars[v] = []
-            for i in range(line_numbers[3], len(hour)):
+            for i in range(line_numbers[3], len(p['data'])):
                 line = self._split_hour_pressure_vals(p['data'][i])
                 if len(line) > 0:
                     for j in range(len(line)):

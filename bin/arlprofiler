@@ -85,7 +85,7 @@ OPTIONAL_ARGS = [
     {
         'short': '-p',
         'long': '--profile-exe',
-        'help': 'Bulk profile executable'
+        'help': 'Bulk profile executable; default: bulk_profiler_csv'
     },
     {
         'short': '-t',
@@ -121,7 +121,7 @@ if __name__ == "__main__":
     parser, args = scripting_args.parse_args(REQUIRED_ARGS, OPTIONAL_ARGS,
         epilog=EXAMPLES_STR)
     try:
-        profiler = arlprofiler.ArlBulkProfiler(args.met_files,
+        profiler = arlprofiler.ArlProfiler(args.met_files,
             profile_exe=args.profile_exe, time_step=args.time_step)
         arl_profile = profiler.profile(args.start,
             args.end, args.locations)

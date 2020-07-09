@@ -25,7 +25,7 @@ from math import exp, log, pow
 from pyairfire import osutils, sun
 from afdatetime.parsing import parse_datetimes
 
-from .profile import ArlProfile
+from .profileparser import ArlProfileParser
 
 __all__ = [
     "ArlProfiler"
@@ -244,7 +244,7 @@ class ArlProfiler(object):
         # data = {}
         # with open(full_path_profile_txt, 'w') as f:
         #     for line in f....
-        profile = ArlProfile(full_path_profile_txt, first, start, end)
+        profile = ArlProfileParser(full_path_profile_txt, first, start, end)
         local_hourly_profile = profile.get_hourly_params()
 
         # TDOO: manipulate local_hourly_profile[dt] at all (e.g. map keys to

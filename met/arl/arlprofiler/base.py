@@ -120,20 +120,19 @@ class ArlProfilerBase(abc.ABC):
     ## Profiling
     ##
 
-    def profile(self, local_start, local_end, utc_offset, *location_args):
+    def profile(self, utc_start, utc_end, *location_args):
         """Returns local met profile for specific location and timewindow
 
         args:
-         - lat -- latitude of location
-         - lng -- longitude of location
-         - local_start -- local datetime object representing beginning of time window
-         - local_end -- local datetime object representing end of time window
-         - utc_offset -- hours ahead of or behind UTC
+         - start -- datetime object representing beginning of time window, in UTC
+         - end -- datetime object representing end of time window, in UTC
+        *args
+         - location_args - either
         """
         self._set_location_info(*location_args)
 
         utc_start_hour, utc_end_hour = self._get_utc_start_and_end_hours(
-            local_start, local_end, utc_offset)
+            utc_start, utc_end)
 
         local_met_data = {}
         for met_file in self._met_files:
@@ -154,21 +153,18 @@ class ArlProfilerBase(abc.ABC):
               cmd = self._get_command(met_dir, met_file_name, wdir, output_filename)
               self._call(cmd)
               lmd = self._load(output_filename, met_file['first_hour'],
-                  start, end, utc_offset)
+                  start, end)
             local_met_data.update(lmd)
         return local_met_data
 
 
-    def _get_utc_start_and_end_hours(self, local_start, local_end, utc_offset):
-        # TODO: validate utc_offset?
-        if local_start > local_end:
+    def _get_utc_start_and_end_hours(self, utc_start, utc_end):
+        if utc_start > utc_end:
             raise ValueError("Invalid localmet time window: start={}, end={}".format(
-              local_start, local_end))
+              utc_start, utc_end))
 
-        utc_start = local_start - timedelta(hours=utc_offset)
         utc_start_hour = datetime(utc_start.year, utc_start.month,
             utc_start.day, utc_start.hour)
-        utc_end = local_end - timedelta(hours=utc_offset)
         utc_end_hour = datetime(utc_end.year, utc_end.month, utc_end.day,
             utc_end.hour)
         # Don't include end hour if it's on the hour
@@ -200,13 +196,12 @@ class ArlProfilerBase(abc.ABC):
             raise RuntimeError("profile failed with exit code {}".format(
                 status))
 
-    def _load(self, full_path_profile_txt, first, start, end, utc_offset):
+    def _load(self, full_path_profile_txt, first, start, end):
         logging.debug("Loading {}".format(full_path_profile_txt))
         # data = {}
         # with open(full_path_profile_txt, 'w') as f:
         #     for line in f....
-        profile = ArlProfile(full_path_profile_txt, first, start, end,
-            utc_offset)
+        profile = ArlProfile(full_path_profile_txt, first, start, end)
         local_hourly_profile = profile.get_hourly_params()
 
         # TDOO: manipulate local_hourly_profile[dt] at all (e.g. map keys to

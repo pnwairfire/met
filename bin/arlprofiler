@@ -64,20 +64,14 @@ REQUIRED_ARGS = [
     {
         'short': '-s',
         'long': '--start',
-        'help': "start of time window to profile (local time)",
+        'help': "start of time window to profile (UTC)",
         'action': scripting_args.ParseDatetimeAction
     },
     {
         'short': '-e',
         'long': '--end',
-        'help': "end of time window to profile (local time)",
+        'help': "end of time window to profile (UTC)",
         'action': scripting_args.ParseDatetimeAction
-    },
-    {
-        'short': '-o',
-        'long': '--utc-offset',
-        'help': 'utc offset at lat/lng',
-        'type': float
     }
 ]
 
@@ -126,7 +120,7 @@ if __name__ == "__main__":
         profiler = arlprofiler.ArlProfiler(args.met_files,
             profile_exe=args.profile_exe, time_step=args.time_step)
         arl_profile = profiler.profile(args.start,
-            args.end, args.utc_offset, args.lat, args.lng)
+            args.end, args.lat, args.lng)
 
         output_data = json.dumps(arl_profile)
         if args.output_file:

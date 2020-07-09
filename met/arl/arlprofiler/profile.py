@@ -190,22 +190,54 @@ import logging
 import os
 import re
 from collections import defaultdict
-
 from datetime import date, datetime, timedelta
 from math import exp, log, pow
 
-from pyairfire import osutils, sun
+import pytz
 from afdatetime.parsing import parse_datetimes
+from pyairfire import osutils, sun
+from timezonefinder import TimezoneFinder
 
 ONE_HOUR = timedelta(hours=1)
 
+class memoize(object):
+
+    def __init__(self, f):
+        self.f = f
+        self.mem = {}
+
+    def __call__(self, *args, **kwargs):
+        key = (args, tuple(kwargs.values()))
+        import pdb;pdb.set_trace()
+        if key not in self.mem:
+            self.mem[key] = self.f(*args, **kwargs)
+        return self.mem[key]
+
+@memoize
+def get_utc_offset(dt, lat, lng):
+    tz_name = TimezoneFinder().timezone_at(lng=lng, lat=lat)
+    tz = pytz.timezone(tz_name)
+    return tz.utcoffset(dt).total_seconds() / 3600
+
+@memoize
+def get_sun_and_planet_into(hr, lat, lng, utc_offset):
+    s = sun.Sun(lat=lat, lng=lng)
+
+    sunrise = s.sunrise_hr(dt) + utc_offset
+    sunset = s.sunset_hr(dt) + utc_offset
+
+    # default Planetary Boundary Layer (PBL) step function
+    default_pbl = lambda hr,sunrise,sunset: 1000.0 if (sunrise + 1) < hr < sunset else 100.0
+
+    return sunrise, sunset, default_pbl, utc_offset
+
+
 class ArlProfile(object):
-    def __init__(self, filename, first, start, end, utc_offset):
+    def __init__(self, filename, first, start, end):
         self.raw_file = filename
         self.first = first
         self.start = start
         self.end = end
-        self.utc_offset = utc_offset
         self.hourly_profile = defaultdict(lambda: {})
 
     def get_hourly_params(self):
@@ -231,16 +263,16 @@ class ArlProfile(object):
                 line = line.rstrip()
                 if location_hour_first_line in line:
                     profile.append(dict(
-                        ts=self._prase_ts(line)
+                        ts=self.prase_ts(line)
                     ))
 
                 elif location_hour_second_line in line:
                     profile[-1].update(idx=0)
-                    profile[-1].update(self._parse_lat_lng(line))
+                    profile[-1].update(self.parse_lat_lng(line))
 
                 elif line.lstrip().startswith(bulk_location_hour_second_line):
-                    profile[-1].update(self._parse_location_idx(line))
-                    profile[-1].update(self._parse_lat_lng(line))
+                    profile[-1].update(self.parse_location_idx(line))
+                    profile[-1].update(self.parse_lat_lng(line))
 
                 elif hour_separator in line or next_separator in line:
                     continue
@@ -263,16 +295,15 @@ class ArlProfile(object):
         self.spread_hourly_results()
         self.cast_strings_to_floats()
         self.fill_in_fields()
-        self.utc_to_local()
-        return self.hourly_profile
+        return self.utc_to_local()
 
-    def _prase_ts(self, line):
+    def prase_ts(self, line):
         # 'date' is of the form: ['12', '6', '22', '18', '0']
         date = line[line.find(":") + 1:].strip().split()
         year = int(date[0]) if int(date[0]) > 1980 else (2000 + int(date[0]))
         return datetime(year, int(date[1]), int(date[2]), int(date[3]))
 
-    def _parse_location_idx(self, line):
+    def parse_location_idx(self, line):
         # From Rober re. fires that are outside grid:
         #
         # it doesn't die when the location is off the grid....what it does is
@@ -293,7 +324,7 @@ class ArlProfile(object):
             'in_bounds': val >= 0
         }
 
-    def _parse_lat_lng(self, line):
+    def parse_lat_lng(self, line):
         parts = line.split()
         return {
             'lat': float(parts[-3]),
@@ -303,7 +334,10 @@ class ArlProfile(object):
     def parse_hourly_text(self, profile):
         """ Parse raw hourly text into a more useful dictionary """
         for p in profile:
-            vars = {}
+            vars = {
+                'lat': p['lat'],
+                'lng': p['lng']
+            }
 
             # parameters appear on different line #s, for the two file types
             #line_numbers = [4, 6, 8, 10] if hour[5][2:6].split() == [] else [4, 8, 10, 12]
@@ -440,15 +474,6 @@ class ArlProfile(object):
             return float(val)
         # else returns None
 
-
-    def get_sun_and_planet_into(self, lat, lng):
-        s = sun.Sun(lat=self.lat, lng=self.lng)
-        sunrise = s.sunrise_hr(d) + self.utc_offset
-        sunset = s.sunset_hr(d) + self.utc_offset
-        # default Planetary Boundary Layer (PBL) step function
-        default_pbl = lambda hr,sunrise,sunset: 1000.0 if (sunrise + 1) < hr < sunset else 100.0
-        return sunrise, sunset, default_pbl
-
     def fill_in_fields(self):
         # The following is from BSF
         d = self.first.date()
@@ -456,11 +481,10 @@ class ArlProfile(object):
         for dt, hp in list(self.hourly_profile.items()):
             hr = (dt - self.first).total_seconds() / 3600.0
             for lp in hp.values():
-                sunrise, sunset, default_pbl = get_sun_and_planet_into(
-                    lp['lat'], lng['lng'])
+                sunrise, sunset, default_pbl, utc_offset = get_sun_and_planet_into(
+                    dt, hr, lp['lat'], lp['lng'], utc_offset)
+                lp['utc_offset'] = utc_offset
 
-                lp['lat'] = self.lat
-                lp['lng'] = self.lng
                 for k in ['pressure', 'TPOT', 'WSPD', 'WDIR', 'WWND', 'TEMP', 'SPHU']:
                     lp[k] = lp.get(k)
                 if not lp.get('HGTS'):
@@ -550,8 +574,8 @@ class ArlProfile(object):
         return [(self.T_REF/(self.LAPSE_RATE*0.001))*(1.0 - pow(self.to_float(p)/self.P_SURFACE, self.Rd*self.LAPSE_RATE*0.001/self.G)) for p in pressure]
 
     def utc_to_local(self):
-        # profile dict will contain local met data index by *local* time
-        local_hourly_profile = {}
+        # convert profiles to index by location idx and then local time
+        local_hourly_profile = defaultdict(lambda: {})
         dt = self.start
         while dt <= self.end:
             logging.debug("Loading {}".format(dt.isoformat()))
@@ -559,6 +583,15 @@ class ArlProfile(object):
                 raise ValueError("{} not in arl file {}".format(dt.isoformat(),
                     self.raw_file))
 
-            local_hourly_profile[dt + timedelta(hours=self.utc_offset)] = self.hourly_profile[dt]
+            for idx, lp in self.hourly_profile[dt].items():
+                local_time = dt + timedelta(hours=lp['utc_offset'])
+                # TODO: deal with daylight savings time <-> standard time change
+                #   one will result in overwriting hourly data, the other will
+                #   result in a gap in the data
+                #   one solution: compute utc_offset once per location, not
+                #   once per location per hour
+                local_hourly_profile[idx][local_time] = lp
+
             dt += ONE_HOUR
-        self.hourly_profile = local_hourly_profile
+
+        return local_hourly_profile

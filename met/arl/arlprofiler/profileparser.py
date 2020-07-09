@@ -131,19 +131,23 @@ class memoize(object):
 
     def __call__(self, *args, **kwargs):
         key = (args, tuple(kwargs.values()))
-        import pdb;pdb.set_trace()
         if key not in self.mem:
             self.mem[key] = self.f(*args, **kwargs)
         return self.mem[key]
 
 @memoize
 def get_utc_offset(dt, lat, lng):
+    # TODO: return already computed utc offset for lat,lng,
+    #   despite different date, so we don't ahve double
+    #   values for gaps when crossing DST <--> ST
+    #   (update `memoize` to allows specifuing which args to
+    #   include in key)
     tz_name = TimezoneFinder().timezone_at(lng=lng, lat=lat)
     tz = pytz.timezone(tz_name)
     return tz.utcoffset(dt).total_seconds() / 3600
 
 @memoize
-def get_sun_and_planet_into(hr, lat, lng, utc_offset):
+def get_sun_and_planet_into(dt, hr, lat, lng, utc_offset):
     s = sun.Sun(lat=lat, lng=lng)
 
     sunrise = s.sunrise_hr(dt) + utc_offset
@@ -152,7 +156,7 @@ def get_sun_and_planet_into(hr, lat, lng, utc_offset):
     # default Planetary Boundary Layer (PBL) step function
     default_pbl = lambda hr,sunrise,sunset: 1000.0 if (sunrise + 1) < hr < sunset else 100.0
 
-    return sunrise, sunset, default_pbl, utc_offset
+    return sunrise, sunset, default_pbl
 
 
 class ArlProfileParser(object):
@@ -164,52 +168,12 @@ class ArlProfileParser(object):
         self.hourly_profile = defaultdict(lambda: {})
 
     def get_hourly_params(self):
-        """ Read a raw profile.txt into an hourly dictionary of parameters """
-        read_data = False
+        """ Read a raw profile.txt into an an array of location
+        specific hourly dictionaries of parameters """
 
-        # The output file uses this text string to separate hours.
-        hour_separator = "______"
-        # The bulk profiler's output file additionall puts this text string
-        # between hours.  It will be ignored, since hour_separator will
-        # trigger hour switch
-        next_separator =  "------next------"
-
-        location_hour_first_line = "Profile Time:"
-        location_hour_second_line = "Profile Location:"
-        bulk_location_hour_second_line = "Profile:"
-
-        # read raw text into a dictionary
-        profile = []
-        hour_step = []
-        with open(self.raw_file, 'r') as f:
-            for line in f.readlines():
-                line = line.rstrip()
-                if location_hour_first_line in line:
-                    profile.append(dict(
-                        ts=self.prase_ts(line)
-                    ))
-
-                elif location_hour_second_line in line:
-                    profile[-1].update(idx=0)
-                    profile[-1].update(self.parse_lat_lng(line))
-
-                elif line.lstrip().startswith(bulk_location_hour_second_line):
-                    profile[-1].update(self.parse_location_idx(line))
-                    profile[-1].update(self.parse_lat_lng(line))
-
-                elif hour_separator in line or next_separator in line:
-                    continue
-
-                elif profile:
-                    profile[-1]['data'] = profile[-1].get('data', [])
-                    profile[-1]['data'].append(line)
-
-                # else, we haven't reached the first location-hour,
-                # so ignore. (we're still in header lines)
-
-        profile = [p for p in profile if p.get('data')]
+        profile = self.load_profile()
         if not profile:
-            return {}
+            raise ValueError("Error loading profile data")
 
         # process raw output into necessary data
         self.parse_hourly_text(profile)
@@ -219,6 +183,45 @@ class ArlProfileParser(object):
         self.cast_strings_to_floats()
         self.fill_in_fields()
         return self.utc_to_local()
+
+
+    # The output file uses this text string to separate hours.
+    HOUR_SEPARATOR = "______"
+    # The bulk profiler's output file additionall puts this text string
+    # between hours.  It will be ignored, since HOUR_SEPARATOR will
+    # trigger hour switch
+    NEXT_SEPARATOR =  "------next------"
+    LOCATION_HOUR_FIRST_LINE = "Profile Time:"
+    LOCATION_HOUR_SECOND_LINE = "Profile:"
+
+    def load_profile(self):
+        # read raw text into a dictionary
+        profile = []
+        hour_step = []
+        with open(self.raw_file, 'r') as f:
+            for line in f.readlines():
+                line = line.rstrip()
+                if self.LOCATION_HOUR_FIRST_LINE in line:
+                    profile.append(dict(
+                        ts=self.prase_ts(line)
+                    ))
+
+                elif line.lstrip().startswith(self.LOCATION_HOUR_SECOND_LINE):
+                    profile[-1].update(self.parse_location_idx(line))
+                    profile[-1].update(self.parse_lat_lng(line))
+                    profile[-1].update(utc_offset=get_utc_offset(
+                        profile[-1]['ts'], profile[-1]['lat'], profile[-1]['lng']))
+
+                elif self.HOUR_SEPARATOR in line or self.NEXT_SEPARATOR in line:
+                    continue
+
+                elif profile:
+                    profile[-1]['data'] = profile[-1].get('data', [])
+                    profile[-1]['data'].append(line)
+
+                # else, we haven't reached the first location-hour,
+                # so ignore. (we're still in header lines)
+        return [p for p in profile if p.get('data')]
 
     def prase_ts(self, line):
         # 'date' is of the form: ['12', '6', '22', '18', '0']
@@ -259,7 +262,8 @@ class ArlProfileParser(object):
         for p in profile:
             vars = {
                 'lat': p['lat'],
-                'lng': p['lng']
+                'lng': p['lng'],
+                'utc_offset': p['utc_offset']
             }
 
             # parameters appear on different line #s, for the two file types
@@ -404,9 +408,8 @@ class ArlProfileParser(object):
         for dt, hp in list(self.hourly_profile.items()):
             hr = (dt - self.first).total_seconds() / 3600.0
             for lp in hp.values():
-                sunrise, sunset, default_pbl, utc_offset = get_sun_and_planet_into(
-                    dt, hr, lp['lat'], lp['lng'], utc_offset)
-                lp['utc_offset'] = utc_offset
+                sunrise, sunset, default_pbl = get_sun_and_planet_into(
+                    dt, hr, lp['lat'], lp['lng'], lp['utc_offset'])
 
                 for k in ['pressure', 'TPOT', 'WSPD', 'WDIR', 'WWND', 'TEMP', 'SPHU']:
                     lp[k] = lp.get(k)

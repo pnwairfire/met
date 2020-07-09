@@ -250,5 +250,9 @@ class ArlProfiler(object):
         # TDOO: manipulate local_hourly_profile[dt] at all (e.g. map keys to
         # more human readable ones...look in SEVPlumeRise for mappings, and remove
         # code from there if mapping is done here) ?
+        for i in local_hourly_profile:
+            local_hourly_profile[i] = {
+                k.isoformat(): v for k,v in local_hourly_profile[i].items()
+            }
 
-        return {k.isoformat(): v for k,v in local_hourly_profile.items()}
+        return local_hourly_profile

@@ -19,6 +19,7 @@ import os
 import re
 import subprocess
 import uuid
+from collections import defaultdict
 from datetime import date, datetime, timedelta
 from math import exp, log, pow
 
@@ -133,7 +134,7 @@ class ArlProfiler(object):
         utc_start_hour, utc_end_hour = self._get_utc_start_and_end_hours(
             utc_start, utc_end)
 
-        local_met_data = {}
+        local_met_data = defaultdict(lambda: {})
         for met_file in self._met_files:
             if (met_file['first_hour'] > utc_end_hour or
                     met_file['last_hour'] < utc_start_hour):
@@ -148,13 +149,16 @@ class ArlProfiler(object):
             met_dir = met_dir + '/'
 
             with osutils.create_working_dir() as wdir:
-              output_filename = os.path.join(wdir, self.PROFILE_OUTPUT_FILE)
-              cmd = self._get_command(met_dir, met_file_name, wdir, output_filename)
-              self._call(cmd)
-              lmd = self._load(output_filename, met_file['first_hour'],
-                  start, end)
-            local_met_data.update(lmd)
-        return local_met_data
+                output_filename = os.path.join(wdir, self.PROFILE_OUTPUT_FILE)
+                cmd = self._get_command(met_dir, met_file_name, wdir, output_filename)
+                self._call(cmd)
+                lmd = self._load(output_filename, met_file['first_hour'],
+                    start, end)
+            for idx in lmd:
+                local_met_data[idx].update(lmd[idx])
+
+        # return array of location specific dicts, in original order
+        return [e[1] for e in sorted(local_met_data.items(), key=lambda p: p[0])]
 
 
     def _set_location_info(self, locations):

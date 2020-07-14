@@ -348,13 +348,16 @@ class ArlProfileParser(object):
                         break
                 for k in list(param_dict.keys()):
                     # loop through each array, and append to new one
-                    if len(param_dict[k]) > 1:
-                        new_array = []
-                        for j in range(len(param_dict[k])):
-                            if j >= surface_index:
-                                new_array.append(self.to_float(param_dict[k][j]))
-                        new_dict[k] = new_array
-                    elif len(param_dict[k]) == 1:
+                    if hasattr(param_dict[k], 'count'):
+                        if len(param_dict[k]) > 1:
+                            new_array = []
+                            for j in range(len(param_dict[k])):
+                                if j >= surface_index:
+                                    new_array.append(self.to_float(param_dict[k][j]))
+                            new_dict[k] = new_array
+                        elif len(param_dict[k]) == 1:
+                            new_dict[k] = param_dict[k]
+                    else:
                         new_dict[k] = param_dict[k]
 
                 # replace old dict with new

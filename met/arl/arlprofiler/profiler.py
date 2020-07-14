@@ -120,16 +120,16 @@ class ArlProfiler(object):
     ## Profiling
     ##
 
-    def profile(self, utc_start, utc_end, *location_args):
+    def profile(self, utc_start, utc_end, locations):
         """Returns local met profile for specific location and timewindow
 
         args:
          - start -- datetime object representing beginning of time window, in UTC
          - end -- datetime object representing end of time window, in UTC
-        *args
-         - location_args - either
+         - locations - list of locations dicts with 'latitude', 'longitude',
+            and optionally 'id' keys
         """
-        self._set_location_info(*location_args)
+        self._set_location_info(locations)
 
         utc_start_hour, utc_end_hour = self._get_utc_start_and_end_hours(
             utc_start, utc_end)

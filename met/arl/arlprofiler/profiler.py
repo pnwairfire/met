@@ -165,7 +165,7 @@ class ArlProfiler(object):
         self._locations = locations
         for l in self._locations:
             if not l.get('id'):
-                l['id'] = uuid.uuid4()
+                l['id'] = str(uuid.uuid4())
             if not l.get('latitude') and l.get('lat'):
                 l['latitude'] = l['lat']
             if not l.get('longitude') and l.get('lng'):

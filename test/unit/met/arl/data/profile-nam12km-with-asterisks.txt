@@ -4,7 +4,7 @@
 
 ___________________________________________________
  Profile Time:  15  8  9  0  0
- Profile Location:    41.77 -123.97  (143,247)
+ Profile:       1   41.77 -123.97  (143,247)
 
         SHGT  MSLP  TPP3  CPP3  T02M  RH2M  U10M  V10M  PRSS  LHTF  SHTF  USTR  RGHS  DSWF  PBLH  TMPS  SOLT  SOLW  WESD  CSNO
   CICE  CFZR  CRAI  VSBY  TCLD  CAPE  CINH  LISD  LIB4
@@ -43,7 +43,7 @@ ___________________________________________________
 
 ___________________________________________________
  Profile Time:  15  8  9  3  0
- Profile Location:    41.77 -123.97  (143,247)
+ Profile:       1   41.77 -123.97  (143,247)
 
         SHGT  MSLP  TPP3  CPP3  T02M  RH2M  U10M  V10M  PRSS  LHTF  SHTF  USTR  RGHS  DSWF  PBLH  TMPS  SOLT  SOLW  WESD  CSNO
   CICE  CFZR  CRAI  VSBY  TCLD  CAPE  CINH  LISD  LIB4

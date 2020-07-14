@@ -173,7 +173,7 @@ class ArlProfileParser(object):
 
         profile = self.load_profile()
         if not profile:
-            raise ValueError("Error loading profile data")
+            return {}
 
         # process raw output into necessary data
         self.parse_hourly_text(profile)

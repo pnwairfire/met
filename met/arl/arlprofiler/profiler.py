@@ -157,9 +157,10 @@ class ArlProfiler(object):
             for idx in lmd:
                 local_met_data[idx].update(lmd[idx])
 
-        # return array of location specific dicts, in original order
-        return [e[1] for e in sorted(local_met_data.items(), key=lambda p: p[0])]
-
+        # return array of location specific dicts, in original order, with
+        # empty dicts for any locations that hav eno profile data (e.g. if
+        # out pf bounds)
+        return [local_met_data.get(i, {}) for i in range(len(locations))]
 
     def _set_location_info(self, locations):
         self._locations = locations

@@ -221,7 +221,7 @@ class ArlProfileParser(object):
 
                 # else, we haven't reached the first location-hour,
                 # so ignore. (we're still in header lines)
-        return [p for p in profile if p.get('data')]
+        return [p for p in profile if p.get('data') and not p.get('out_of_bounds')]
 
     def prase_ts(self, line):
         # 'date' is of the form: ['12', '6', '22', '18', '0']
@@ -230,25 +230,26 @@ class ArlProfileParser(object):
         return datetime(year, int(date[1]), int(date[2]), int(date[3]))
 
     def parse_location_idx(self, line):
-        # From Rober re. fires that are outside grid:
-        #
-        # it doesn't die when the location is off the grid....what it does is
-        # in the line that starts each profile, like:
+        # For fires that are outside the met grid, the index value is
+        # negative.  For example, the following is within the grid:
         #
         #  Profile:       1   41.4280 -121.1127  (154,495)
         #
-        # it will look like this instead:
+        # And the following is outside:
         #
         #  Profile:      -2   41.4554 -107.1011  (736,546)
         #
-        # where the number is negative (and all the values are bs)...i might
-        # be trying to pull data from outside the array so that is likely a
-        # bad idea but it does flag them in a round-about-way.
+        # When negative, all of the houlry values are invalid
+
         val = int(line.split()[1])
-        return {
-            'idx': abs(val) - 1,
-            'in_bounds': val >= 0
+        r = {
+            'idx': abs(val) - 1
         }
+
+        if val <= 0:
+            r['out_of_bounds'] = True
+
+        return r
 
     def parse_lat_lng(self, line):
         parts = line.split()
@@ -337,7 +338,6 @@ class ArlProfileParser(object):
         """
         for dt in self.hourly_profile:
             for idx, param_dict in self.hourly_profile[dt].items():
-
                 surface_p = self.to_float(param_dict['pressure_at_surface'][0])
                 if surface_p > self.to_float(param_dict['pressure'][0]) or surface_p < self.to_float(param_dict['pressure'][-1]):
                     continue

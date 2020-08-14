@@ -114,7 +114,30 @@ class TestARLFinderCreateDateMatcher(object):
         self.arl_finder._accepted_forecasts = [
             datetime.datetime(2015, 1, 2),
             datetime.datetime(2015, 1, 2, 12),
-            datetime.datetime(2015, 1, 5, 12)  # <-- outside of time window
+            datetime.datetime(2015, 1, 5, 12)  # <-- after time window
+        ]
+        s = datetime.datetime(2015, 1, 1, 14)
+        e = datetime.datetime(2015, 1, 4, 2)
+        m = self.arl_finder._create_date_matcher(s,e)
+        assert m.pattern == '.*(2015010200|2015010212)'
+
+        self.arl_finder._accepted_forecasts = [
+            datetime.datetime(2014, 12, 20), # <-- well before time window
+            datetime.datetime(2015, 1, 1), # <-- before time window, but within default  DEFAULT_MAX_DAYS_OUT = 4
+            datetime.datetime(2015, 1, 2),
+            datetime.datetime(2015, 1, 2, 12)
+        ]
+        s = datetime.datetime(2015, 1, 1, 14)
+        e = datetime.datetime(2015, 1, 4, 2)
+        m = self.arl_finder._create_date_matcher(s,e)
+        assert m.pattern == '.*(2015010100|2015010200|2015010212)'
+
+        self.arl_finder._max_days_out = 0
+        self.arl_finder._accepted_forecasts = [
+            datetime.datetime(2014, 12, 20), # <-- well before time window
+            datetime.datetime(2015, 1, 1), # <-- before time window and now excluded, with max_days_out = 0
+            datetime.datetime(2015, 1, 2),
+            datetime.datetime(2015, 1, 2, 12)
         ]
         s = datetime.datetime(2015, 1, 1, 14)
         e = datetime.datetime(2015, 1, 4, 2)

@@ -272,8 +272,9 @@ class ArlFinder(object):
         # It is guaranteed if ArlFinder.find was called, but not if
         # ArlIndexer.index was called
         if self._accepted_forecasts:
+            padded_start = start and start - self._max_days_out * ONE_DAY
             forecasts = [d for d in self._accepted_forecasts
-                if (not start or start <= d) and (not end or d <= end)]
+                if (not padded_start or padded_start <= d) and (not end or d <= end)]
             if not forecasts:
                 raise ValueError(self.ACCEPTED_FORECASTS_OUTSIDE_TIME_WINDOW_ERROR_MSG)
             # going off of whitelist of specific forecasts, so include

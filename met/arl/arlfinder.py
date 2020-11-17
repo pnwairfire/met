@@ -506,7 +506,11 @@ class ArlFinder(object):
             if self._fewer_arl_files:
                 if i < (num_arl_files - 1): # not at last file
                     latest_dt = max(list(files_per_hour.keys()) + [dt]) if files_per_hour else dt
-                    if latest_dt + ONE_HOUR >= sorted_arl_files[i+1]['first_hour']:
+                    if (latest_dt + ONE_HOUR > sorted_arl_files[i+1]['first_hour']
+                            # The following handles the case where start is one hour
+                            # behind the next forecast's first hour
+                            or (latest_dt + ONE_HOUR == sorted_arl_files[i+1]['first_hour']
+                                and files_per_hour.get(latest_dt))):
                         continue
 
             end_dt = min(f_dict['last_hour'], end) if end else f_dict['last_hour']

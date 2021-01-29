@@ -337,7 +337,7 @@ class ArlProfileParser(object):
         This data is all nonsense, so it needs to be removed.
         """
         for dt in self.hourly_profile:
-            for idx, param_dict in self.hourly_profile[dt].items():
+            for idx, param_dict in list(self.hourly_profile[dt].items()):
                 surface_p = self.to_float(param_dict['pressure_at_surface'][0])
                 if surface_p > self.to_float(param_dict['pressure'][0]) or surface_p < self.to_float(param_dict['pressure'][-1]):
                     continue

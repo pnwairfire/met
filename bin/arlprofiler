@@ -100,6 +100,11 @@ OPTIONAL_ARGS = [
     {
         'long': '--output-file',
         'help': "write to file instead of stdout"
+    },
+    {
+        'long': '--indent',
+        'help': 'indentation in output json',
+        'type': int
     }
 ]
 
@@ -126,7 +131,7 @@ if __name__ == "__main__":
         arl_profile = profiler.profile(args.start,
             args.end, args.locations)
 
-        output_data = json.dumps(arl_profile, sort_keys=True)
+        output_data = json.dumps(arl_profile, indent=args.indent, sort_keys=True)
         if args.output_file:
             with open(args.output_file, 'w') as f:
                 f.write(output_data)

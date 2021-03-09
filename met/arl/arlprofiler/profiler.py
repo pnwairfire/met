@@ -42,7 +42,8 @@ class ArlProfiler(object):
 
     DEFAULT_PROFILE_EXE = 'bulk_profiler_csv'
 
-    def __init__(self, met_files, profile_exe=None, time_step=None):
+    def __init__(self, met_files, profile_exe=None, time_step=None,
+            working_dir=None):
         """Constructor
 
         Carries out initialization and validation
@@ -50,8 +51,10 @@ class ArlProfiler(object):
         args:
          - met_files
         kwargs:
-         - profile_exe
+         - profile_exe --
          - time_step -- time step of arl file; defaults to 1
+         - working_dir -- directiory to save input and output files used
+            and produced by the profile executable
 
         met_files is expected to be a list of dicts, each dict specifying an
         arl met file along with a 'first', 'start', and 'end' datetimes. For
@@ -81,6 +84,8 @@ class ArlProfiler(object):
         self._profile_exe = profile_exe
 
         self._time_step = time_step or 1
+
+        self._working_dir = working_dir
 
     ##
     ## Instantiation
@@ -135,7 +140,7 @@ class ArlProfiler(object):
             utc_start, utc_end)
 
         local_met_data = defaultdict(lambda: {})
-        for met_file in self._met_files:
+        for i, met_file in enumerate(self._met_files):
             if (met_file['first_hour'] > utc_end_hour or
                     met_file['last_hour'] < utc_start_hour):
                 # met file has no data within given timewindow
@@ -148,7 +153,9 @@ class ArlProfiler(object):
             # split returns dir without trailing slash, which is required by profile
             met_dir = met_dir + '/'
 
-            with osutils.create_working_dir() as wdir:
+            working_dir = self._working_dir and os.path.abspath(os.path.join(
+                self._working_dir, str(i)))
+            with osutils.create_working_dir(working_dir=working_dir) as wdir:
                 output_filename = os.path.join(wdir, self.PROFILE_OUTPUT_FILE)
                 cmd = self._get_command(met_dir, met_file_name, wdir, output_filename)
                 self._call(cmd)

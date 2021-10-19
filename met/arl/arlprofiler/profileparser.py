@@ -254,8 +254,8 @@ class ArlProfileParser(object):
     def parse_lat_lng(self, line):
         parts = line.split()
         return {
-            'lat': float(parts[-3]),
-            'lng': float(parts[-2])
+            'lat': float(parts[2]),
+            'lng': float(parts[3])
         }
 
     def parse_hourly_text(self, profile):

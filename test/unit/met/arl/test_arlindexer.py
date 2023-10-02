@@ -8,13 +8,13 @@ import time
 import tempfile
 
 import timecop
-from py.test import raises
+from pytest import raises
 
 from met.arl import arlindexer
 
 class TestARLIndexer(object):
 
-    def setup(self):
+    def setup_method(self):
         self.arl_indexer = arlindexer.ArlIndexer('DRI6km', tempfile.mkdtemp(),
             server_name="Foo Test Server")
 

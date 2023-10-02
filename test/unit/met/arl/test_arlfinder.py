@@ -9,7 +9,7 @@ import tempfile
 import io # for monkeypatching
 import os
 
-from py.test import raises
+from pytest import raises
 
 from pyairfire import io as p_io # for monkeypatching
 
@@ -84,7 +84,7 @@ class TestARLFinderSettingAcceptedForecastsFromConfig(object):
 
 class TestARLFinderCreateDateMatcher(object):
 
-    def setup(self):
+    def setup_method(self):
         self.arl_finder = arlfinder.ArlFinder(tempfile.mkdtemp())
 
     def test_no_config(self):
@@ -175,7 +175,7 @@ class TestARLFinderCreateDateMatcher(object):
 class TestARLFinderParseIndexFiles(object):
     """Unit test for _parse_index_files and _parse_index_file"""
 
-    def setup(self):
+    def setup_method(self):
         self.arl_finder = arlfinder.ArlFinder(tempfile.mkdtemp())
 
     # TODO: somehow test _find_index_files, monkeypatching os.walk, etc.
@@ -240,7 +240,7 @@ class TestARLFinderParseIndexFiles(object):
 
 class TestARLFinderPruneAndSort(object):
 
-    def setup(self):
+    def setup_method(self):
         self.arl_finder = arlfinder.ArlFinder(tempfile.mkdtemp())
 
     ##
@@ -447,7 +447,7 @@ class TestARLFinderWindowDetermination(object):
     and ending with file time window assignments
     """
 
-    def setup(self):
+    def setup_method(self):
         self.arl_finder = arlfinder.ArlFinder(tempfile.mkdtemp())
 
     ##
@@ -816,7 +816,7 @@ class TestARLFinderFind(object):
         with open(os.path.join(forecast_dir, 'arl12hrindex.csv'), 'w') as f:
             f.write(INDEX_CONTENTS[date_str])
 
-    def setup(self):
+    def setup_method(self):
         self.root_dir = tempfile.mkdtemp()
         self._create_index_csv('2015110200')
         self._create_index_csv('2015110300')

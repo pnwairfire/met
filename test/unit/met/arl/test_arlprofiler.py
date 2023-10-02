@@ -8,7 +8,7 @@ import os
 import tempfile
 
 from numpy.testing import assert_approx_equal
-from py.test import raises
+from pytest import raises
 from pyairfire import sun
 
 from met.arl import arlprofiler

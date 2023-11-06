@@ -323,7 +323,7 @@ class ArlIndexDB(object):
         # handle 'INDEXED_FIELDS' not being defined for a collection
         fields = getattr(self, 'INDEXED_FIELDS', [])
         for f in fields:
-            collection.ensure_index(f)
+            collection.create_index(f)
 
 class MetFilesCollection(ArlIndexDB):
 
@@ -338,7 +338,7 @@ class MetFilesCollection(ArlIndexDB):
 
         # we want to update or insert
         query = {'server': index_data['server'], 'domain': index_data['domain']}
-        self.met_files.update(query, index_data, upsert=True)
+        self.met_files.update_one(query, {'$set': index_data}, upsert=True)
 
     def find(self, **query):
         """Find available files, by server and domain
@@ -347,7 +347,7 @@ class MetFilesCollection(ArlIndexDB):
         return [e.pop('_id') and e for e in r]
 
     def clear(self):
-        self.met_files.remove({})
+        self.met_files.delete_many({})
 
 class MetDatesCollection(ArlIndexDB):
 
@@ -403,7 +403,7 @@ class MetDatesCollection(ArlIndexDB):
         # TODO: is there a way to do a bulk write, opting for upsert
         #  on each item in to_save?
         for d in to_save:
-            self.dates.update({'domain': d['domain']}, d, upsert=True)
+            self.dates.update_one({'domain': d['domain']}, {'$set': d}, upsert=True)
         return to_save
 
     def find(self, domain=None):
@@ -414,4 +414,4 @@ class MetDatesCollection(ArlIndexDB):
         return [e.pop('_id') and e for e in r]
 
     def clear(self):
-        self.dates.remove({})
+        self.dates.delete_many({})

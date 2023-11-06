@@ -263,7 +263,16 @@ class ArlIndexDB(object):
         if bool(config.get('mongo_ssl_certfile')) ^ bool(config.get('mongo_ssl_keyfile')):
             raise ValueError(self.SSL_KEY_AND_CERT_MUST_BOTH_BE_SPECIFIED)
 
-        if config.get('mongo_ssl_certfile') and config.get('mongo_ssl_keyfile'):
+        if config.get('mongo_tls_cafile'):
+            return {
+                'ssl': True,
+                #'tlsAllowInvalidHostnames': True, # Note: makes vulnerable to man-in-the-middle attacks
+                'tlsAllowInvalidCertificates': True,
+                # 'tlsCertificateKeyFile': config['mongo_tls_certfile'],
+                'tlsCAFile': config['mongo_tls_cafile']
+            }
+
+        elif config.get('mongo_ssl_certfile') and config.get('mongo_ssl_keyfile'):
             return {
                 'ssl': True,
                 'ssl_cert_reqs': ssl.CERT_NONE,

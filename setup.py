@@ -34,7 +34,7 @@ setup(
         "pyairfire>=5.0.0,<6.0",
         "afscripting>=2.0.0,<3.0",
         "afdatetime>=2.0.0,<3.0",
-        "pymongo==4.5.0"
+        "pymongo==4.6.3"
     ],
     dependency_links=[
         "https://pypi.airfire.org/simple/pyairfire/",

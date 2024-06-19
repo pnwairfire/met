@@ -303,18 +303,52 @@ class ArlProfileParser(object):
 
             self.hourly_profile[p['ts']][p['idx']] = vars
 
+
     NEGATIVE_NUMBER_MATCHER = re.compile('([^E])-')
-    MISSING_VALUE_MATCHER = re.compile('\*{6,}')
+    ONE_MISSING_VALUE_MATCHER = re.compile('([^*])\*{6,8}([^*])')
+    TWO_MISSING_VALUE_MATCHER = re.compile('([^*])\*{12,16}([^*])')
+    THREE_MISSING_VALUE_MATCHER = re.compile('([^*])\*{18,23}([^*])')
+    REMAINING_MISSING_VALUE_MATCHER = re.compile('([^*])\*+([^*])')
+
     def _split_hour_pressure_vals(self, line):
-        # Some values occupy 6 characters, and some 8.  They are for
-        # the most part separated by spaces. Two exceptions I've
-        # found are when a negative number's '-' is right up against
-        # the value to it's left and when missing value '*'s are
-        # right up against the value to the left. So, add extra space
-        # before any '-' and around any missing values (replacing '***'
-        # with 'None'), and then split on space
+        """Values occupy between 6 and 8 characters.  They are for the most
+        part separated by spaces. One exception is when a negative number's
+        '-' is right up against the value to it's left. For example:
+
+           1000   1.9  0.15   129  20.2-125.3  71.1   1.2    293.4 253.2   1.9
+
+        For these, we add an extra space before the '-', since we'll
+        be splitting on spaces. Another exception is when there as asterisk
+        strings in place of values. For example:
+
+           1000    166   20.6      0      0   0.79   80.8   0.30    293.8*******    0.
+
+        and
+           959   488  1015     0     0 -0.16   1.0     0     0   959************  0.10   1.9     0******  15.6   291     0     0     0     0     0     0 24135
+
+        We need to add extra space around these asterisk strings.  This is
+        complicted by the fact that the strings are of variable length
+        and by the posibility of multiple asterisk strings running into each
+        other (as in the second example, above). The code, below, assumes
+        that the substrings for each field are between 6 and 8 characters long.
+        It only handles up to 23 continuous asterisks.  Beyond that, the
+        number of fields represented by an asterisk string is ambigious.
+        """
+        # handle negative numbers
         new_line = self.NEGATIVE_NUMBER_MATCHER.sub('\\1 -', line)
-        return self.MISSING_VALUE_MATCHER.sub(' None ', new_line).split()
+
+        # handle asterisks (HACK: see docstring above)
+        #new_line = self.MISSING_VALUE_MATCHER.sub(' None ', new_line).split()
+        new_line = self.ONE_MISSING_VALUE_MATCHER.sub('\\1 None \\2', new_line)
+        new_line = self.TWO_MISSING_VALUE_MATCHER.sub('\\1 None None \\2', new_line)
+        new_line = self.THREE_MISSING_VALUE_MATCHER.sub('\\1 None None None \\2', new_line)
+        # If there are other lengths of asterisks, just replace with single
+        # 'None', which will likely trigger parse_hourly_text to abort use
+        # the line and to use None values instead for this pressure leave
+        new_line = self.REMAINING_MISSING_VALUE_MATCHER.sub('\\1 None \\2', new_line)
+
+        return new_line.split()
+
 
     FIRST_HOUR_KEYS_TO_FIX = [
         'pressure_at_surface', 'TPP3', 'T02M', 'RH2M', 'U10M', 'V10M', 'PRSS'

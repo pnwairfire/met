@@ -303,10 +303,10 @@ class ArlProfileParser(object):
 
 
     NEGATIVE_NUMBER_MATCHER = re.compile('([^E])-')
-    ONE_MISSING_VALUE_MATCHER = re.compile('([^*])\*{6,8}([^*])')
-    TWO_MISSING_VALUE_MATCHER = re.compile('([^*])\*{12,16}([^*])')
-    THREE_MISSING_VALUE_MATCHER = re.compile('([^*])\*{18,23}([^*])')
-    REMAINING_MISSING_VALUE_MATCHER = re.compile('([^*])\*+([^*])')
+    ONE_MISSING_VALUE_MATCHER = re.compile('([^*])[*]{6,8}([^*])')
+    TWO_MISSING_VALUE_MATCHER = re.compile('([^*])[*]{12,16}([^*])')
+    THREE_MISSING_VALUE_MATCHER = re.compile('([^*])[*]{18,23}([^*])')
+    REMAINING_MISSING_VALUE_MATCHER = re.compile('([^*])[*]+([^*])')
 
     def _split_hour_pressure_vals(self, line):
         """Values occupy between 6 and 8 characters.  They are for the most

@@ -281,11 +281,9 @@ class ArlProfileParser(object):
                 vars[first_vars[v]].append(first_vals[v])
 
             # parse variables at pressure levels
-            main_vars = []
-            main_vars.append("pressure")
+            var_names_str = p['data'][line_numbers[2]]
+            main_vars = ["pressure"] + var_names_str.split()
 
-            for var_str in p['data'][line_numbers[2]].split():
-                main_vars.append(var_str)
             for v in main_vars:
                 vars[v] = []
             for i in range(line_numbers[3], len(p['data'])):

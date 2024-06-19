@@ -283,13 +283,21 @@ class ArlProfileParser(object):
             # parse variables at pressure levels
             main_vars = []
             main_vars.append("pressure")
+
             for var_str in p['data'][line_numbers[2]].split():
                 main_vars.append(var_str)
             for v in main_vars:
                 vars[v] = []
             for i in range(line_numbers[3], len(p['data'])):
                 line = self._split_hour_pressure_vals(p['data'][i])
+
                 if len(line) > 0:
+                    # only compare array lengths if line is non-empty
+                    if len(line) != len(main_vars):
+                        # Something went wrong with parsing the line. Set line to
+                        # an array of None values (either None or 'None' will work)
+                        line = [None] * len(main_vars)
+
                     for j in range(len(line)):
                         vars[main_vars[j]].append(line[j])
 

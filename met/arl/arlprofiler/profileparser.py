@@ -284,6 +284,10 @@ class ArlProfileParser(object):
             var_names_str = p['data'][line_numbers[2]]
             main_vars = ["pressure"] + var_names_str.split()
 
+            # TODO: determine starting position of each var name in
+            #   var_names_str and update _split_hour_pressure_vals to
+            #   split values string based on those positions
+
             for v in main_vars:
                 vars[v] = []
             for i in range(line_numbers[3], len(p['data'])):

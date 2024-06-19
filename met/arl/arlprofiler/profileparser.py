@@ -296,13 +296,15 @@ class ArlProfileParser(object):
             self.hourly_profile[p['ts']][p['idx']] = vars
 
     NEGATIVE_NUMBER_MATCHER = re.compile('([^E])-')
-    MISSING_VALUE_MATCHER = re.compile('\*{6}')
+    MISSING_VALUE_MATCHER = re.compile('\*{6,}')
     def _split_hour_pressure_vals(self, line):
         # Some values occupy 6 characters, and some 8.  They are for
-        # the most part separated by spaces. The one exception I've
-        # found is when a negative number's '-' is right up against
-        # the value to it's left; so, add an extra space before any
-        # '-' and then split on space
+        # the most part separated by spaces. Two exceptions I've
+        # found are when a negative number's '-' is right up against
+        # the value to it's left and when missing value '*'s are
+        # right up against the value to the left. So, add extra space
+        # before any '-' and around any missing values (replacing '***'
+        # with 'None'), and then split on space
         new_line = self.NEGATIVE_NUMBER_MATCHER.sub('\\1 -', line)
         return self.MISSING_VALUE_MATCHER.sub(' None ', new_line).split()
 

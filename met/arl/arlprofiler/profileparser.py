@@ -428,6 +428,10 @@ class ArlProfileParser(object):
                         and (i == 0 or times[i-1] > self.end))):
                 del self.hourly_profile[k]
 
+        if not times:
+            logging.debug("No hourly data")
+            return
+
         # get pruned set of times
         times = sorted(self.hourly_profile.keys())
         logging.debug(f"times: {times}")

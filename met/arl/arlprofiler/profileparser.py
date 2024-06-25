@@ -415,12 +415,22 @@ class ArlProfileParser(object):
         Frequently, ARL files will only have data every 3 or 6 hours.
         If so, we need to spread those values out to become hourly data.
         """
-        # clean up unwanted hours of information
-        for k in list(self.hourly_profile.keys()):
-            if k < self.start or k > (self.end):
+        # Clean up unwanted hours of information. Remove all except for
+        #  1. The last hour before self.start
+        #  2. what's between self.start and self.end
+        #  3. The first hour after self.end
+        times = sorted(self.hourly_profile.keys())
+        logging.debug(f"times: {times}")
+        for i, k in enumerate(times):
+            if ((times[i] < self.start
+                        and (i == len(times)-1 or times[i+1] < self.start)) or
+                    (times[i] > self.start
+                        and (i == 0 or times[i-1] > self.end))):
                 del self.hourly_profile[k]
 
+        # get pruned set of times
         times = sorted(self.hourly_profile.keys())
+        logging.debug(f"times: {times}")
 
         # spread values if the data is not hourly
         new_datetime = self.start

@@ -525,10 +525,14 @@ class ArlProfileParser(object):
 
         dp = []
         for i in range(len(rh)):
-            if self.to_float(rh[i]) < 1.0:
-                dp.append((-5321.0 / ((-5.0) - (5321.0 / (273.0 + self.to_float(temp[i]))))) - 273.0)
-            else:
-                dp.append((-5321.0 / ((log(self.to_float(rh[i])/100.0)) - (5321.0 / (273.0 + self.to_float(temp[i]))))) - 273.0)
+            try:
+                if self.to_float(rh[i]) < 1.0:
+                    dp.append((-5321.0 / ((-5.0) - (5321.0 / (273.0 + self.to_float(temp[i]))))) - 273.0)
+                else:
+                    dp.append((-5321.0 / ((log(self.to_float(rh[i])/100.0)) - (5321.0 / (273.0 + self.to_float(temp[i]))))) - 273.0)
+            except Exception as e:
+                # This could happen if either temp or RH is None
+                dp.append(None)
 
         return dp
 

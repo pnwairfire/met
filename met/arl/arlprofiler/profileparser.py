@@ -388,9 +388,20 @@ class ArlProfileParser(object):
         """
         for dt in self.hourly_profile:
             for idx, param_dict in list(self.hourly_profile[dt].items()):
-                surface_p = self.to_float(param_dict['pressure_at_surface'][0])
-                if surface_p > self.to_float(param_dict['pressure'][0]) or surface_p < self.to_float(param_dict['pressure'][-1]):
+                # There are cases where the pressures array has null values. e.g.:
+                #  [
+                #    '1000', '975', '950', '925', '900', '850', '800', '750', '700', '650', '600', '550',
+                #    '500', '450', '400', '350', '300', '250', '200', '150', '100', None, None
+                #  ]
+                # TODO: Should we weed out None values, or at least remove
+                #   trailing None values, but then proceed?
+                if any([p is None for p in param_dict['pressure']]):
                     continue
+
+                surface_p = self.to_float(param_dict['pressure_at_surface'][0])
+                if surface_p is None or surface_p > self.to_float(param_dict['pressure'][0]) or surface_p < self.to_float(param_dict['pressure'][-1]):
+                    continue
+
                 new_dict = {}
                 for i in range(len(param_dict['pressure'])):
                     if self.to_float(param_dict['pressure'][i]) < surface_p:

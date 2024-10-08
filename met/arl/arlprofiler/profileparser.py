@@ -135,6 +135,10 @@ class memoize(object):
             self.mem[key] = self.f(*args, **kwargs)
         return self.mem[key]
 
+
+# Instantiation takes about a second, so create one object at module scope
+TIMEZONE_FINDER = TimezoneFinder()
+
 @memoize
 def get_utc_offset(dt, lat, lng):
     # TODO: return already computed utc offset for lat,lng,
@@ -142,7 +146,7 @@ def get_utc_offset(dt, lat, lng):
     #   values for gaps when crossing DST <--> ST
     #   (update `memoize` to allows specifuing which args to
     #   include in key)
-    tz_name = TimezoneFinder().timezone_at(lng=lng, lat=lat)
+    tz_name = TIMEZONE_FINDER.timezone_at(lng=lng, lat=lat)
     tz = pytz.timezone(tz_name)
     return tz.utcoffset(dt).total_seconds() / 3600
 

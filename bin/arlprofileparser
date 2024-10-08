@@ -1,0 +1,135 @@
+#! /usr/bin/env python
+
+__author__ = "Joel Dubowy"
+__copyright__ = "Copyright 2016, AirFire, PNW, USFS"
+
+import cProfile
+import json
+import logging
+import os
+import sys
+import traceback
+
+from afscripting import args as scripting_args
+from afscripting.utils import exit_with_msg
+
+try:
+    from met.arl import arlprofiler
+except:
+    import os
+    root_dir = os.path.abspath(os.path.join(sys.path[0], '../'))
+    sys.path.insert(0, root_dir)
+    from met.arl import arlprofiler
+
+
+class LocationAction(scripting_args.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        d = getattr(namespace, self.dest)
+        parts = values.split(',')
+        loc = {'latitude':parts[0], 'longitude':parts[1]}
+        if len(parts) > 2:
+            loc['id'] = parts[2]
+        d.append(loc)
+
+class ParseArlFilesAction(scripting_args.Action):
+
+    def __call__(self, parser, namespace, value, option_string=None):
+        """Splits value into key/value, and set in destination dict
+
+        Note: Expects value to be of the format 'key=value'.  Also expects
+        destination (i.e. parser.value's self.dest attribute), to be
+        initialized as an empty dict.
+        """
+        m = value.split(';')
+        if len(m) != 3:
+            msg = ("Invalid value '{}' for option '{}' - value must be of the "
+                "form '<file>;<first_hour>;<last_hour>', where 'first_hour'"
+                " and 'last_hour' are UTC".format(value, option_string))
+            raise scripting_args.ArgumentTypeError(msg)
+        d = getattr(namespace, self.dest)
+        d = d or []
+        d.append({"file": m[0], "first_hour": m[1], "last_hour": m[2]})
+        setattr(namespace, self.dest, d)
+
+REQUIRED_ARGS = [
+    {
+        'short': '-f',
+        'long': '--profile-file',
+        'help': "profile.txt output file"
+    },
+    {
+        'short': '-s',
+        'long': '--start',
+        'help': "start of time window to profile (UTC)",
+        'action': scripting_args.ParseDatetimeAction
+    },
+    {
+        'short': '-e',
+        'long': '--end',
+        'help': "end of time window to profile (UTC)",
+        'action': scripting_args.ParseDatetimeAction
+    }
+]
+
+OPTIONAL_ARGS = [
+    {
+        'long': '--output-file',
+        'help': "write to file instead of stdout"
+    },
+    {
+        'long': '--indent',
+        'help': 'indentation in output json',
+        'type': int
+    },
+    {
+        'short': '-p',
+        'long': '--with-code-profiling',
+        'help': 'use cProfile package to profile code performance',
+        'action': 'store_true'
+    }
+]
+
+EXAMPLES_STR = """Extracts local met data from for a specific location
+
+Examples:
+
+  $ PATH=~/path/to/profile/exe/dir/:$PATH \\
+     {script_name} -f profile.txt -s 2014-05-29T12:00:00 -e 2014-05-30T00:00:00
+
+ """.format(script_name=sys.argv[0])
+
+
+def main(args):
+    try:
+        full_path_profile_txt = os.path.abspath(args.profile_file)
+
+        # set `first` to args.start
+        profile = arlprofiler.ArlProfileParser(full_path_profile_txt,
+            args.start, args.start, args.end)
+        local_hourly_profile = profile.get_hourly_params()
+
+        import pdb;pdb.set_trace()
+
+        output_data = json.dumps(local_hourly_profile,
+            indent=args.indent, sort_keys=True)
+        if args.output_file:
+            with open(args.output_file, 'w') as f:
+                f.write(output_data)
+        else:
+            sys.stdout.write(output_data)
+
+    except Exception as e:
+        logging.error(e)
+        logging.debug(traceback.format_exc())
+        exit_with_msg(e)
+
+
+if __name__ == "__main__":
+    parser, args = scripting_args.parse_args(REQUIRED_ARGS, OPTIONAL_ARGS,
+        epilog=EXAMPLES_STR)
+
+    # Sort options: ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+    if args.with_code_profiling:
+        cProfile.run('main(args)', sort='ncalls')
+    else:
+        main(args)

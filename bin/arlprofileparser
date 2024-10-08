@@ -107,8 +107,10 @@ def main(args):
         profile = arlprofiler.ArlProfileParser(full_path_profile_txt,
             args.start, args.start, args.end)
         local_hourly_profile = profile.get_hourly_params()
-
-        import pdb;pdb.set_trace()
+        for i in local_hourly_profile:
+            local_hourly_profile[i] = {
+                k.isoformat(): v for k,v in local_hourly_profile[i].items()
+            }
 
         output_data = json.dumps(local_hourly_profile,
             indent=args.indent, sort_keys=True)

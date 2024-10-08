@@ -203,7 +203,7 @@ class ArlProfileParser(object):
         profile = []
         hour_step = []
         with open(self.raw_file, 'r') as f:
-            for line in f.readlines():
+            for line in f:
                 line = line.rstrip()
                 if self.LOCATION_HOUR_FIRST_LINE in line:
                     profile.append(dict(

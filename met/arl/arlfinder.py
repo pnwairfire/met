@@ -354,6 +354,8 @@ class ArlFinder(object):
         """
         arl_files = []
         for row in CSV2JSON(input_file=index_file)._load():
+            if not row: # i.e.if empty line
+                continue
             tw = parse_datetimes(row, 'start', 'end')
             f = self._get_file_pathname(index_file, row['filename'])
             if f:

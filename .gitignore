@@ -6,4 +6,4 @@ met.egg-info/
 tmp/
 .cache
 dev-private/
-.private/
+.private
